@@ -1,11 +1,11 @@
 import { defineStorage } from '@aws-amplify/backend';
+import { displayLecture } from '../functions/displayLecture/resource';
  
-export const storage = defineStorage({
-  name: 'amplifyTeamDrive',
+export const lectures = defineStorage({
+  name: 'lectures',
   access: (allow) => ({
-    'users-events/{entity_id}/*': [
-      allow.guest.to(['read']),
-      allow.entity('identity').to(['read', 'write', 'delete'])
-    ]
+    'python/*': [
+      allow.resource(displayLecture).to(['read']),
+    ],
   })
 });
