@@ -3,8 +3,23 @@ import { useAuthenticator } from '@aws-amplify/ui-react';
 import type { Schema } from "../amplify/data/resource";
 import { generateClient } from "aws-amplify/data";
 import axios from 'axios';
+import { FileUploader } from '@aws-amplify/ui-react-storage';
+import '@aws-amplify/ui-react/styles.css';
+
 
 const client = generateClient<Schema>();
+
+export const DefaultFileUploaderExample = () => {
+  return (
+    <FileUploader
+      acceptedFileTypes={['.pdf', '.md', '.pptx', 'image/*', '.json']}
+      bucket={'lectures'}
+      path="python/"
+      maxFileCount={1}
+      isResumable
+    />
+  );
+};
 
 function App() {
   const { signOut } = useAuthenticator();
@@ -52,6 +67,7 @@ function App() {
         <button onClick={fetchMarkdownContent}>Display Markdown Content</button>
         {markdownContent && <div dangerouslySetInnerHTML={{ __html: markdownContent }} />}
       </div>
+      <DefaultFileUploaderExample />
       <div>
         🥳 App successfully hosted. Try creating a new todo.
         <br />
