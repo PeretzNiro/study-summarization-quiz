@@ -1,0 +1,241 @@
+/* Course Listing Styles */
+.courses-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.courses-page h1 {
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.course-card {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.course-image {
+  height: 180px;
+  overflow: hidden;
+}
+
+.course-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.course-content {
+  padding: 1.5rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.course-content h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.course-content p {
+  margin-bottom: 1.5rem;
+  color: #666;
+  flex-grow: 1;
+}
+
+.difficulty-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.difficulty-badge.beginner {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.difficulty-badge.intermediate {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+.difficulty-badge.advanced {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* Lecture Listing Styles */
+.lectures-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.course-header {
+  margin-bottom: 2rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.course-description {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.lecture-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.lecture-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.lecture-content {
+  flex-grow: 1;
+}
+
+.lecture-content h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.lecture-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.difficulty {
+  font-weight: 500;
+}
+
+.difficulty.beginner {
+  color: #2e7d32;
+}
+
+.difficulty.intermediate {
+  color: #e65100;
+}
+
+.difficulty.advanced {
+  color: #c62828;
+}
+
+.lecture-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Lecture Detail Styles */
+.lecture-detail-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.lecture-navigation {
+  margin-bottom: 2rem;
+}
+
+.lecture-header {
+  margin-bottom: 2rem;
+}
+
+.lecture-header h1 {
+  margin-bottom: 0.5rem;
+}
+
+.lecture-content {
+  line-height: 1.6;
+  color: #333;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+}
+
+.lecture-summary {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+}
+
+.lecture-actions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.start-quiz-btn {
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+}
+
+/* Quiz Page Styles */
+.quiz-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.quiz-header {
+  margin-bottom: 2rem;
+}
+
+/* Loading and Error States */
+.loading-container,
+.error-container {
+  text-align: center;
+  padding: 3rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.error-container {
+  color: #c62828;
+}

@@ -1,82 +1,128 @@
 import { useEffect, useState } from "react";
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import type { Schema } from "../amplify/data/resource";
 import { generateClient } from "aws-amplify/data";
-import axios from 'axios';
-import { FileUploader } from '@aws-amplify/ui-react-storage';
-import '@aws-amplify/ui-react/styles.css';
-
+import AdminPage from "./pages/AdminPage";
+import Navigation from "./components/nav/Navigation";
+import CoursesPage from "./pages/CoursesPage";
+import LecturesPage from "./pages/LecturesPage";
+import LectureDetailPage from "./pages/LectureDetailPage";
+import QuizPage from "./pages/QuizPage";
+import { Flex } from '@aws-amplify/ui-react';
+import './components/Quiz.css';
+import './components/courses.css';
 
 const client = generateClient<Schema>();
 
-export const DefaultFileUploaderExample = () => {
+// Navigation wrapper with route-aware navigation
+const NavigationWrapper = () => {
+  const { signOut } = useAuthenticator();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('main');
+  
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    
+    switch (tab) {
+      case 'main':
+        navigate('/');
+        break;
+      case 'courses':
+        navigate('/courses');
+        break;
+      case 'admin':
+        navigate('/admin');
+        break;
+      default:
+        navigate('/');
+    }
+  };
+  
   return (
-    <FileUploader
-      acceptedFileTypes={['.pdf', '.md', '.pptx', 'image/*', '.json']}
-      bucket={'lectures'}
-      path="python/"
-      maxFileCount={1}
-      isResumable
+    <Navigation 
+      activeTab={activeTab} 
+      setActiveTab={handleTabChange} 
+      onSignOut={signOut} 
+      className="navigation"
     />
   );
 };
 
-function App() {
-  const { signOut } = useAuthenticator();
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-  const [markdownContent, setMarkdownContent] = useState<string | null>(null);
-
-  useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
-
-    // Fetch the markdown content when the component mounts
-    fetchMarkdownContent();
-  }, []);
-
-  async function fetchMarkdownContent() {
-    try {
-      const response = await axios.get('/path/to/your/endpoint'); // Replace with your actual endpoint
-      setMarkdownContent(response.data.content);
-    } catch (error) {
-      console.error("Error fetching markdown content:", error);
-    }
-  }
-
-  function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
-  }
-    
-  function deleteTodo(id: string) {
-    client.models.Todo.delete({ id });
-  }
-
+function AppContent() {
+  const navigate = useNavigate();
+  
+  const renderHomePage = () => (
+    <>
+      <h1 className="row_padding">Hi, <span className="bold_icon"> 👋</span></h1>
+      <div className="box_container">
+        {/* Make entire box wrapper clickable */}
+        <div 
+          className="box_wrapper clickable"
+          onClick={() => navigate('/courses')}
+        >
+          <h2>🚀 Learn Courses</h2>
+          <p>Browse through our catalog of courses</p>
+        </div>
+        
+        {/* Make entire box wrapper clickable */}
+        <div 
+          className="box_wrapper clickable"
+          onClick={() => navigate('/courses')}
+        >
+          <h2>🧠 Take an Assessment</h2>
+          <p>Test your knowledge with quizzes</p>
+        </div>
+        
+        <div 
+          className="box_wrapper clickable"
+          onClick={() => navigate('/tasks')}
+        >
+          <h2>🎯 Achieve a Task</h2>
+          <p>Break down goals into manageable steps</p>
+        </div>
+        
+        <div 
+          className="box_wrapper clickable"
+          onClick={() => navigate('/schedule')}
+        >
+          <h2>🗓️ Schedule Your Time</h2>
+          <p>Organize courses, tasks, and personal commitments</p>
+        </div>
+      </div>
+      <div className="footer">
+        🥳 App successfully hosted.
+      </div>
+    </>
+  );
+  
+  // Then you would add placeholder routes:
   return (
     <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map(todo => <li
-          onClick={() => deleteTodo(todo.id)}
-          key={todo.id}>
-          {todo.content}
-        </li>)}
-      </ul>
-      <div>
-        <button onClick={fetchMarkdownContent}>Display Markdown Content</button>
-        {markdownContent && <div dangerouslySetInnerHTML={{ __html: markdownContent }} />}
-      </div>
-      <DefaultFileUploaderExample />
-      <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-          Review next step of this tutorial.
-        </a>
-      </div>
-      <button onClick={signOut}>Sign out</button>
+      <Flex direction="column" gap="1rem">
+        <NavigationWrapper />
+        
+        <Routes>
+          <Route path="/" element={renderHomePage()} />
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses/:courseId" element={<LecturesPage />} />
+          <Route path="/courses/:courseId/lectures/:lectureId" element={<LectureDetailPage />} />
+          <Route path="/courses/:courseId/lectures/:lectureId/quiz" element={<QuizPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          {/* Placeholder routes for future features */}
+          <Route path="/tasks" element={<div className="placeholder-page">Task Decomposition Coming Soon</div>} />
+          <Route path="/schedule" element={<div className="placeholder-page">Schedule Management Coming Soon</div>} />
+        </Routes>
+      </Flex>
     </main>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

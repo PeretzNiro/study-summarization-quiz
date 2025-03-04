@@ -5,7 +5,7 @@ export const lectures = defineStorage({
   name: 'lectures',
   access: (allow) => ({
     'python/*': [
-      allow.resource(displayLecture).to(['read']),
+      allow.authenticated.to(['read', 'write'])
     ],
   })
 });

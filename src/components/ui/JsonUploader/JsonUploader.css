@@ -1,0 +1,119 @@
+.json-uploader-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.json-preview {
+  background-color: #f7f7f7;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 1rem;
+  overflow: auto;
+  font-size: 0.9rem;
+  max-height: 300px;
+  color: #333;
+}
+
+/* Progress indicator */
+.progress-indicator {
+  display: flex;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.progress-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.progress-step-number {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.5rem;
+}
+
+.progress-step.active .progress-step-number {
+  background-color: #007bff;
+  color: white;
+}
+
+.progress-step.complete .progress-step-number {
+  background-color: #28a745;
+  color: white;
+}
+
+.progress-line {
+  position: absolute;
+  top: 15px;
+  height: 2px;
+  background-color: #e0e0e0;
+  width: 90%;
+  left: 5%;
+  z-index: 0;
+}
+
+/* Table cards */
+.table-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.table-card:hover {
+  border-color: #999;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.table-card.selected {
+  border-color: #007bff;
+  box-shadow: 0 2px 8px rgba(0,123,255,0.25);
+}
+
+/* Field badges */
+.field-badge {
+  display: inline-block;
+  padding: 0.25em 0.6em;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-radius: 10px;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.field-badge.required {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.field-badge.optional {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.field-badge.matched {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* Make textarea monospace for better JSON formatting */
+textarea {
+  font-family: monospace !important;
+}
+
+.align-base {
+  align-items: baseline !important;
+}
+
+.padding-bottom {
+    padding-bottom: 0.5rem !important;
+}

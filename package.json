@@ -12,11 +12,19 @@
   "dependencies": {
     "@aws-amplify/ui-react": "^6.9.2",
     "@aws-amplify/ui-react-storage": "^3.8.1",
+    "@aws-sdk/client-dynamodb": "^3.751.0",
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/lib-dynamodb": "^3.751.0",
+    "@babel/core": "^7.26.9",
     "aws-amplify": "^6.13.2",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.8.1",
+    "core-js": "^3.40.0",
+    "glob": "^11.0.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.2.0",
+    "rimraf": "^6.0.1"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.14.1",
