@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
 import AdminPage from "./pages/AdminPage";
 import Navigation from "./components/nav/Navigation";
 import CoursesPage from "./pages/CoursesPage";
@@ -12,8 +10,6 @@ import QuizPage from "./pages/QuizPage";
 import { Flex } from '@aws-amplify/ui-react';
 import './components/Quiz.css';
 import './components/courses.css';
-
-const client = generateClient<Schema>();
 
 // Navigation wrapper with route-aware navigation
 const NavigationWrapper = () => {
@@ -74,18 +70,12 @@ function AppContent() {
           <p>Test your knowledge with quizzes</p>
         </div>
         
-        <div 
-          className="box_wrapper clickable"
-          onClick={() => navigate('/tasks')}
-        >
+        <div className="box_wrapper">
           <h2>🎯 Achieve a Task</h2>
           <p>Break down goals into manageable steps</p>
         </div>
         
-        <div 
-          className="box_wrapper clickable"
-          onClick={() => navigate('/schedule')}
-        >
+        <div className="box_wrapper">
           <h2>🗓️ Schedule Your Time</h2>
           <p>Organize courses, tasks, and personal commitments</p>
         </div>
@@ -96,7 +86,6 @@ function AppContent() {
     </>
   );
   
-  // Then you would add placeholder routes:
   return (
     <main>
       <Flex direction="column" gap="1rem">
@@ -109,9 +98,6 @@ function AppContent() {
           <Route path="/courses/:courseId/lectures/:lectureId" element={<LectureDetailPage />} />
           <Route path="/courses/:courseId/lectures/:lectureId/quiz" element={<QuizPage />} />
           <Route path="/admin" element={<AdminPage />} />
-          {/* Placeholder routes for future features */}
-          <Route path="/tasks" element={<div className="placeholder-page">Task Decomposition Coming Soon</div>} />
-          <Route path="/schedule" element={<div className="placeholder-page">Schedule Management Coming Soon</div>} />
         </Routes>
       </Flex>
     </main>

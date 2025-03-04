@@ -1,5 +1,4 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
-import { storeLectureData } from "../functions/storeLectureData/resource";
 
 const schema = a.schema({
 Course: a
