@@ -1,3 +1,7 @@
+[data-amplify-authenticator] {
+  height: 100vh;
+}
+
 body {
   margin: 0;
   background: linear-gradient(180deg, rgb(117, 81, 194), rgb(255, 255, 255));
@@ -12,10 +16,6 @@ main {
   align-items: stretch;
   justify-content: center;
   align-items: center;
-}
-
-main > div {
-  width: 100% !important;
 }
 
 button {
@@ -72,9 +72,8 @@ a {
 }
 
 .navigation {
-  background-color: rgba(255, 255, 255, 1) !important;
   border-radius: var(--amplify-components-button-border-radius) !important;
-  padding: 1rem !important;
+  padding: 1rem;
   box-shadow: 0px 1px 10px 1px #888 !important;
   -webkit-box-shadow: 0px 1px 10px 1px #888 !important;
   -moz-box-shadow: 0px 1px 10px 1px #888 !important;
@@ -85,6 +84,16 @@ a {
 }
 
 .box_wrapper {
+  box-shadow: 0px 1px 10px 1px #ccc;
+  -webkit-box-shadow: 0px 1px 10px 1px #ccc;
+  -moz-box-shadow: 0px 1px 10px 1px #ccc;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  transition: all var(--amplify-components-button-transition-duration);
+}
+
+.box_wrapper_no_hover {
   box-shadow: 0px 1px 10px 1px #ccc;
   -webkit-box-shadow: 0px 1px 10px 1px #ccc;
   -moz-box-shadow: 0px 1px 10px 1px #ccc;
@@ -111,6 +120,12 @@ a {
   display: flex;
   flex-direction: column;
   align-self: anchor-center;
+  max-width: 460px;
+  margin: auto;
+}
+
+.radius {
+  border-radius: 8px !important;
 }
 
 .footer {
@@ -149,7 +164,27 @@ a {
 }
 
 @media screen and (max-width: 600px) {
+  h1 {
+    font-size: 5.3vw;
+  }
+
   h2 {
     font-size: 4vw;
   }
+
+  h3 {
+    font-size: 3.5vw;
+  }
+
+  h4 {
+    font-size: 3vw;
+  }
+
+  p {
+    font-size: 2.6vw;
+  }
+}
+
+.desktop-nav, .mobile-nav {
+  transition: opacity 0.2s ease-in-out;
 }

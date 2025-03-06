@@ -1,0 +1,40 @@
+/* Tab styling */
+.admin-tabs {
+  margin-bottom: 2rem;
+}
+
+/* Style the tab bar */
+.admin-tabs [role="tablist"] {
+  background-color: #eaeaea;
+  border-radius: 8px 8px 0 0;
+  padding: 0.5rem 0.5rem 0 0.5rem;
+  gap: 0.25rem;
+}
+
+/* Style individual tabs */
+.admin-tabs [role="tab"] {
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.2s ease;
+}
+
+/* Active tab styling */
+.admin-tabs [role="tab"][aria-selected="true"] {
+  background-color: white;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+  border-bottom: none;
+}
+
+/* Hover effect for inactive tabs */
+.admin-tabs [role="tab"]:not([aria-selected="true"]):hover {
+  background-color: #eaeaea;
+}
+
+/* Tab content panel - add some padding */
+.admin-tabs [role="tabpanel"] {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}

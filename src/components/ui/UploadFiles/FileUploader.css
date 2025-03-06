@@ -1,0 +1,50 @@
+.file-uploader-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.radius {
+  border-radius: 8px;
+}
+
+/* Style for the file uploader component */
+.amplify-fileuploader {
+  margin-top: 1rem;
+  border: 2px dashed #e0e0e0;
+  border-radius: 6px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.amplify-fileuploader:hover {
+  border-color: #999;
+  background-color: #f9f9f9;
+}
+
+/* Upload results section */
+.upload-results {
+  margin-top: 1rem;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Light scrollbar for the results section */
+.upload-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.upload-results::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.upload-results::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.upload-results::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}

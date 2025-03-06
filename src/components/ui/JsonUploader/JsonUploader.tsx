@@ -11,11 +11,13 @@ import {
   Alert,
   Loader,
   Badge,
-  Accordion,  // Use Accordion instead of Expander
+  Accordion,
   Divider
 } from '@aws-amplify/ui-react';
-import TableDetector, { DetectionResult } from '../../../services/TableDetector';
+import { TableDetector, DetectionResult } from '../../../services/TableDetector';
 import JsonUploadService, { UploadResult } from '../../../services/JsonUploadService';
+import { checkForDuplicates, updateRecord } from '../../../utils/databaseUtils';
+import { CustomModal } from '../modal/CustomModal';
 import './JsonUploader.css';
 
 const JsonUploader: React.FC = () => {
@@ -30,6 +32,8 @@ const JsonUploader: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'upload' | 'analyze' | 'validate' | 'upload-result'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [existingRecord, setExistingRecord] = useState<any>(null);
 
   const handleJsonTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJsonText(e.target.value);
@@ -113,12 +117,47 @@ const JsonUploader: React.FC = () => {
     setError(null);
     
     try {
+      const existingRecord = await checkForDuplicates(selectedTable, parsedJson);
+      
+      if (existingRecord) {
+        setExistingRecord(existingRecord);
+        setShowDuplicateModal(true);
+        setIsLoading(false);
+        return;
+      }
+      
       const result = await JsonUploadService.uploadToTable(selectedTable, parsedJson);
       setUploadResult(result);
       setStep('upload-result');
     } catch (err: any) {
       console.error('Error uploading data:', err);
       setError(`Upload failed: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateRecord = async () => {
+    setIsLoading(true);
+    setShowDuplicateModal(false);
+    
+    try {
+      const result = await updateRecord(selectedTable, existingRecord, parsedJson);
+      
+      setUploadResult({
+        success: true,
+        message: `${selectedTable} record successfully updated!`,
+        data: result
+      });
+      
+      setStep('upload-result');
+    } catch (error: any) {
+      console.error('Error updating record:', error);
+      setUploadResult({
+        success: false,
+        message: `Update failed: ${error.message || 'Unknown error'}`,
+        data: null
+      });
     } finally {
       setIsLoading(false);
     }
@@ -134,8 +173,8 @@ const JsonUploader: React.FC = () => {
   };
 
   const renderUploadStep = () => (
-    <Card variation="elevated">
-      <Heading level={3}>1. Upload JSON Data</Heading>
+    <Card variation="elevated" className='radius'>
+      <Heading className='heading-margin' level={3}>1. Upload JSON Data</Heading>
       <Text>Provide the JSON data you want to upload to DynamoDB</Text>
       
       <Flex direction="row" gap="1rem" marginTop="1rem">
@@ -164,9 +203,10 @@ const JsonUploader: React.FC = () => {
         onChange={handleJsonTextChange}
         rows={10}
         placeholder='{
-  "courseID": "course-123",
+  "courseId": "COMP-1811",
   "title": "Introduction to AWS",
-  "description": "Learn the basics of AWS"
+  "description": "Learn the basics of AWS",
+  "difficulty": "Easy"
 }'
       />
       
@@ -198,8 +238,8 @@ const JsonUploader: React.FC = () => {
     }
     
     return (
-      <Card variation="elevated">
-        <Heading level={3}>2. Table Detection Results</Heading>
+      <Card variation="elevated" className='radius'>
+        <Heading className='heading-margin' level={3}>2. Table Detection Results</Heading>
         <Text>The system has analyzed your JSON data and suggested the following tables:</Text>
         
         <RadioGroupField
@@ -210,7 +250,7 @@ const JsonUploader: React.FC = () => {
           marginTop="1rem"
         >
           {tableDetectionResults.map((result) => (
-            <Flex key={result.suggestedTable} direction="column" marginBottom="1rem"  className='align-base'>
+            <Flex key={result.suggestedTable} direction="column" marginBottom="1rem" className='align-base'>
               <Radio value={result.suggestedTable}>
                 <Flex alignItems="center" gap="0.5rem">
                   <Text fontWeight={result === tableDetectionResults[0] ? 'bold' : 'normal'}>
@@ -308,8 +348,8 @@ const JsonUploader: React.FC = () => {
     if (!uploadResult) return null;
     
     return (
-      <Card variation="elevated">
-        <Heading level={3}>3. Upload Results</Heading>
+      <Card variation="elevated" className='radius'>
+        <Heading className='heading-margin' level={3}>3. Upload Results</Heading>
         
         {uploadResult.success ? (
           <Alert variation="success" marginTop="1rem">
@@ -321,26 +361,13 @@ const JsonUploader: React.FC = () => {
           </Alert>
         )}
         
-        {uploadResult.records && (
+        {uploadResult.data && (
           <Accordion marginTop="1rem">
             <Accordion.Item value="details">
               <Accordion.Trigger>View Upload Details</Accordion.Trigger>
               <Accordion.Content>
                 <pre className="json-preview">
-                  {JSON.stringify(uploadResult.records, null, 2)}
-                </pre>
-              </Accordion.Content>
-            </Accordion.Item>
-          </Accordion>
-        )}
-        
-        {uploadResult.errors && uploadResult.errors.length > 0 && (
-          <Accordion marginTop="1rem">
-            <Accordion.Item value="errors">
-              <Accordion.Trigger>View Errors</Accordion.Trigger>
-              <Accordion.Content>
-                <pre className="json-preview">
-                  {JSON.stringify(uploadResult.errors, null, 2)}
+                  {JSON.stringify(uploadResult.data, null, 2)}
                 </pre>
               </Accordion.Content>
             </Accordion.Item>
@@ -360,7 +387,7 @@ const JsonUploader: React.FC = () => {
   };
 
   const renderCurrentStep = () => {
-    if (isLoading) {
+    if (isLoading && step !== 'upload-result') {
       return (
         <Flex direction="column" alignItems="center" marginTop="3rem" marginBottom="3rem">
           <Loader size="large" />
@@ -385,6 +412,51 @@ const JsonUploader: React.FC = () => {
     <div className="json-uploader-container">
       <Heading level={2} marginBottom="1.5rem">JSON Upload System</Heading>
       {renderCurrentStep()}
+      
+      <CustomModal isOpen={showDuplicateModal} onClose={() => setShowDuplicateModal(false)}>
+        <Heading level={3} style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e0e0e0' }}>
+          Record Already Exists
+        </Heading>
+        
+        <div className="modal-body">
+          <Text>A {selectedTable} with the same key fields already exists in the database.</Text>
+          <Divider margin="1rem 0" />
+          
+          <Heading level={5} marginBottom="0.5rem">Existing Record Details:</Heading>
+          {existingRecord && (
+            <div className="existing-record">
+              {Object.entries(existingRecord)
+                .filter(([key]) => key !== 'id' && key !== '__typename')
+                .map(([key, value]: [string, any]) => (
+                  <div key={key} className="record-field">
+                    <strong>{key}:</strong> {
+                      typeof value === 'object' 
+                        ? JSON.stringify(value) 
+                        : Array.isArray(value) 
+                          ? value.join(', ') 
+                          : String(value)
+                    }
+                  </div>
+                ))}
+            </div>
+          )}
+          
+          <Alert variation="warning" marginTop="1rem">
+            Would you like to update this record with your new data?
+          </Alert>
+        </div>
+        
+        <div className="modal-footer">
+          <Flex justifyContent="space-between" width="100%">
+            <Button variation="link" onClick={() => setShowDuplicateModal(false)}>
+              Cancel
+            </Button>
+            <Button variation="primary" onClick={handleUpdateRecord}>
+              Update Existing Record
+            </Button>
+          </Flex>
+        </div>
+      </CustomModal>
     </div>
   );
 };

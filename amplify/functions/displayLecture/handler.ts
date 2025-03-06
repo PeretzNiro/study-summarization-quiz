@@ -13,10 +13,10 @@ export const handler = async (event: S3Event) => {
     const bucket = event.Records[0].s3.bucket.name;
     const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
 
-    // Extract courseID and lectureID from the key
-    // Assuming the key format is "python/courseID/lectureID.txt"
-    const [_, courseID, lectureIDWithExt] = key.split('/');
-    const lectureID = lectureIDWithExt.split('.')[0];
+    // Extract courseId and lectureId from the key
+    // Assuming the key format is "python/courseId/lectureId.txt"
+    const [_, courseId, lectureIdWithExt] = key.split('/');
+    const lectureId = lectureIdWithExt.split('.')[0];
 
     // Get the file content from S3
     const getObjectCommand = new GetObjectCommand({
@@ -35,9 +35,9 @@ export const handler = async (event: S3Event) => {
     const putCommand = new PutCommand({
       TableName: process.env.LECTURES_TABLE_NAME, // You'll need to set this environment variable
       Item: {
-        courseID,
-        lectureID,
-        title: lectureIDWithExt, // You might want to modify this
+        courseId,
+        lectureId,
+        title: lectureIdWithExt, // You might want to modify this
         content: fileContent,
         summary: '', // You can add a summary later if needed
       }
@@ -49,8 +49,8 @@ export const handler = async (event: S3Event) => {
       statusCode: 200,
       body: JSON.stringify({
         message: 'Successfully processed file and stored in DynamoDB',
-        courseID,
-        lectureID
+        courseId,
+        lectureId
       })
     };
 

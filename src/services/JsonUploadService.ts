@@ -8,6 +8,7 @@ export interface UploadResult {
   message: string;
   records?: any[];
   errors?: any;
+  data?: any;
 }
 
 export class JsonUploadService {
@@ -65,16 +66,28 @@ export class JsonUploadService {
   }
   
   private async saveRecord(tableName: string, data: any): Promise<any> {
-    // Use the client to dynamically access the table
-    switch (tableName) {
-      case 'Course':
-        return await client.models.Course.create(data);
-      case 'Lecture':
-        return await client.models.Lecture.create(data);
-      case 'Quiz':
-        return await client.models.Quiz.create(data);
-      default:
-        throw new Error(`Unknown table: ${tableName}`);
+    try {
+      switch (tableName) {
+        case 'Course':
+          return await client.models.Course.create(data);
+        case 'Lecture':
+          return await client.models.Lecture.create(data);
+        case 'Quiz':
+          return await client.models.Quiz.create(data);
+        case 'QuizQuestion':
+          return await client.models.QuizQuestion.create(data);
+        case 'UserProgress':
+          return await client.models.UserProgress.create(data);
+        default:
+          throw new Error(`Unknown table: ${tableName}`);
+      }
+    } catch (error: any) {
+      console.error(`Error saving to ${tableName}:`, error);
+      // If there's an AWS error object with additional details, log it
+      if (error.errors) {
+        console.error("AWS Error details:", JSON.stringify(error.errors));
+      }
+      throw error; // Re-throw to handle in the calling function
     }
   }
 }

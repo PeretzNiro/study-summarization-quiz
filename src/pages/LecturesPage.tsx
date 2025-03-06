@@ -26,10 +26,10 @@ const LecturesPage: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        // Fetch course details by courseID
+        // Fetch course details by courseId
         const { data: courseData, errors: courseErrors } = await client.models.Course.list({
           filter: {
-            courseID: { eq: courseId }
+            courseId: { eq: courseId }
           }
         });
         
@@ -47,7 +47,7 @@ if (courseData.length === 0) {
         // Fetch lectures for this course
         const { data: lecturesData, errors: lectureErrors } = await client.models.Lecture.list({
           filter: {
-            courseID: { eq: courseId }
+            courseId: { eq: courseId }
           }
         });
         
@@ -55,9 +55,9 @@ if (courseData.length === 0) {
           throw new Error('Failed to fetch lectures');
         }
         
-        // Sort lectures by lectureID if needed
+        // Sort lectures by lectureId if needed
         const sortedLectures = [...lecturesData].sort((a, b) => 
-          a.lectureID.localeCompare(b.lectureID, undefined, { numeric: true })
+          a.lectureId.localeCompare(b.lectureId, undefined, { numeric: true })
         );
         
         setLectures(sortedLectures);
@@ -86,8 +86,10 @@ if (courseData.length === 0) {
 
   return (
     <div className="lectures-page">
-      <div className="course-header">
+      <div className="lecture-navigation">
         <Link to="/courses" className="back-link">← Back to Courses</Link>
+      </div>
+      <div className="course-header box_wrapper_no_hover">
         <h1>{course.title}</h1>
         {course.description && <p className="course-description">{course.description}</p>}
       </div>
@@ -99,7 +101,7 @@ if (courseData.length === 0) {
       ) : (
         <div className="lecture-list">
           {lectures.map(lecture => (
-            <div key={lecture.lectureID} className="lecture-card">
+            <div key={lecture.lectureId} className="lecture-card">
               <div className="lecture-content">
                 <h3>{lecture.title}</h3>
                 {lecture.summary && <p>{lecture.summary}</p>}
@@ -111,11 +113,11 @@ if (courseData.length === 0) {
                 </div>
               </div>
               <div className="lecture-actions">
-                <Link to={`/courses/${courseId}/lectures/${lecture.lectureID}`} className="btn btn-primary">
+                <Link to={`/courses/${courseId}/lectures/${lecture.lectureId}`} className="btn btn-primary">
                   View Lecture
                 </Link>
                 <button 
-                  onClick={() => handleStartQuiz(lecture.lectureID)} 
+                  onClick={() => handleStartQuiz(lecture.lectureId)} 
                   className="btn btn-secondary"
                 >
                   Start Quiz

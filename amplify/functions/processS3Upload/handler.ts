@@ -38,8 +38,8 @@ export const handler = async (event: S3Event) => {
       console.log('Successfully parsed JSON content');
       
       // Validate that the required fields exist
-      if (!lectureData.courseID || !lectureData.lectureID) {
-        throw new Error('JSON must contain courseID and lectureID fields');
+      if (!lectureData.courseId || !lectureData.lectureId) {
+        throw new Error('JSON must contain courseId and lectureId fields');
       }
     } catch (jsonError) {
       console.error('Failed to parse JSON:', jsonError);
@@ -65,8 +65,8 @@ export const handler = async (event: S3Event) => {
       statusCode: 200,
       body: JSON.stringify({
         message: 'Successfully processed JSON file and invoked storage Lambda',
-        courseID: lectureData.courseID,
-        lectureID: lectureData.lectureID
+        courseId: lectureData.courseId,
+        lectureId: lectureData.lectureId
       })
     };
 

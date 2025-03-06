@@ -8,16 +8,17 @@ import QuizNavigation from './QuizNavigation';
 import QuizResults from './QuizResults';
 
 import { QuizQuestion, UserAnswer } from './types';
-import '../Quiz.css';
+import './Quiz.css';
 
 const client = generateClient<Schema>();
 
 interface QuizContainerProps {
-  courseID: string;   // We’ll fetch all Quiz items matching this courseID
-  lectureID: string;  // and this lectureID
+  courseId: string;   // We’ll fetch all Quiz items matching this courseId
+  lectureId: string;  // and this lectureId
+  onQuizSubmit?: (score: number, quizId: string) => void;
 }
 
-const QuizContainer: React.FC<QuizContainerProps> = ({ courseID, lectureID }) => {
+const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQuizSubmit }) => {
   // -- State --
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
@@ -53,8 +54,8 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseID, lectureID }) =>
         
         const { data: quizRecords, errors } = await client.models.Quiz.list({
           filter: {
-            courseID: { eq: courseID },
-            lectureID: { eq: lectureID },
+            courseId: { eq: courseId },
+            lectureId: { eq: lectureId },
           },
         }) as { data: any[], errors?: any };
 
@@ -102,7 +103,7 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseID, lectureID }) =>
     }
 
     loadQuizData();
-  }, [courseID, lectureID]);
+  }, [courseId, lectureId]);
 
   // -- Answer selection logic --
   const handleAnswerSelect = (answerIndex: number) => {
@@ -134,6 +135,7 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseID, lectureID }) =>
   // -- Submit / Restart
   const handleSubmitQuiz = () => {
     setIsSubmitted(true);
+    handleQuizCompletion(score);
   };
 
   const handleRestartQuiz = () => {
@@ -142,6 +144,15 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseID, lectureID }) =>
     setUserAnswers((prev) =>
       prev.map((ans) => ({ ...ans, selectedAnswerIndex: null }))
     );
+  };
+
+  const handleQuizCompletion = (score: number) => {
+    // Existing logic...
+    
+    // Call the parent handler if provided
+    if (onQuizSubmit) {
+      onQuizSubmit(score, courseId);
+    }
   };
 
   // Check if all questions are answered

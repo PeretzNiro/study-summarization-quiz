@@ -5,8 +5,8 @@ const ddbClient = new DynamoDBClient({});
 const documentClient = DynamoDBDocumentClient.from(ddbClient);
 
 interface LectureData {
-  courseID: string;
-  lectureID: string;
+  courseId: string;
+  lectureId: string;
   title?: string;
   content?: string;
   summary?: string;
@@ -17,8 +17,8 @@ export const handler = async (event: LectureData) => {
     console.log('Received event:', JSON.stringify(event, null, 2));
     
     // Ensure the required primary key fields are present
-    if (!event.courseID || !event.lectureID) {
-      throw new Error('Missing required fields: courseID and lectureID are required');
+    if (!event.courseId || !event.lectureId) {
+      throw new Error('Missing required fields: courseId and lectureId are required');
     }
 
     // Define the table name for easier reference
@@ -33,8 +33,8 @@ export const handler = async (event: LectureData) => {
       const getCommand = new GetCommand({
         TableName: tableName,
         Key: {
-          courseID: event.courseID,
-          lectureID: event.lectureID,
+          courseId: event.courseId,
+          lectureId: event.lectureId,
         }
       });
       
@@ -48,8 +48,8 @@ export const handler = async (event: LectureData) => {
 
     // Merge with existing data or use defaults
     const mergedItem = {
-      courseID: event.courseID,
-      lectureID: event.lectureID,
+      courseId: event.courseId,
+      lectureId: event.lectureId,
       title: event.title || existingItem?.title || '',
       content: event.content || existingItem?.content || '',
       summary: event.summary || existingItem?.summary || ''
@@ -70,8 +70,8 @@ export const handler = async (event: LectureData) => {
       statusCode: 200,
       body: JSON.stringify({
         message: existingItem ? 'Updated lecture in DynamoDB' : 'Created new lecture in DynamoDB',
-        courseID: event.courseID,
-        lectureID: event.lectureID,
+        courseId: event.courseId,
+        lectureId: event.lectureId,
         operation: existingItem ? 'UPDATE' : 'CREATE'
       })
     };

@@ -5,7 +5,7 @@
 }
 
 .json-preview {
-  background-color: #f7f7f7;
+  background-color: #f5f5f5;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   padding: 1rem;
@@ -13,6 +13,7 @@
   font-size: 0.9rem;
   max-height: 300px;
   color: #333;
+  white-space: pre-wrap;
 }
 
 /* Progress indicator */
@@ -72,11 +73,15 @@
 .table-card:hover {
   border-color: #999;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  -moz-box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .table-card.selected {
   border-color: #007bff;
   box-shadow: 0 2px 8px rgba(0,123,255,0.25);
+  -webkit-box-shadow: 0 2px 8px rgba(0,123,255,0.25);
+  -moz-box-shadow: 0 2px 8px rgba(0,123,255,0.25);
 }
 
 /* Field badges */
@@ -111,9 +116,36 @@ textarea {
 }
 
 .align-base {
-  align-items: baseline !important;
+  align-items: baseline;
 }
 
 .padding-bottom {
-    padding-bottom: 0.5rem !important;
+  padding-bottom: 0.75rem;
+}
+
+.heading-margin {
+  margin-bottom: 1rem;
+}
+
+/* Styles for displaying existing record details */
+.existing-record {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.record-field {
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+.record-field:last-child {
+  margin-bottom: 0;
+}
+
+.radius {
+  border-radius: 8px;
 }

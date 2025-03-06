@@ -1,24 +1,37 @@
 import { useState } from "react";
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { useAuthenticator, Authenticator } from '@aws-amplify/ui-react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import AdminPage from "./pages/AdminPage";
 import Navigation from "./components/nav/Navigation";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
 import LectureDetailPage from "./pages/LectureDetailPage";
 import QuizPage from "./pages/QuizPage";
-import { Flex } from '@aws-amplify/ui-react';
-import './components/Quiz.css';
-import './components/courses.css';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import AdminRoute from './components/auth/AdminRoute';
+import './components/quiz/Quiz.css';
+import './styles/courses.css';
+import './App.css';
 
 // Navigation wrapper with route-aware navigation
 const NavigationWrapper = () => {
   const { signOut } = useAuthenticator();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('main');
   
+  // Get the stored active tab or default to 'main'
+  const storedTab = sessionStorage.getItem('activeTab') || 'main';
+  const [activeTab, setActiveTab] = useState(storedTab);
+  
+  // Use auth context - remove isLoading since it's not used
+  const { isAdmin } = useAuth(); // Removed isLoading
+  
+  // Don't rely on effectiveIsAdmin, just use isAdmin from context
+  // The context is already initialized with sessionStorage values
+  
+  // Save active tab when it changes
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    sessionStorage.setItem('activeTab', tab);
     
     switch (tab) {
       case 'main':
@@ -28,7 +41,11 @@ const NavigationWrapper = () => {
         navigate('/courses');
         break;
       case 'admin':
-        navigate('/admin');
+        if (isAdmin) {
+          navigate('/admin');
+        } else {
+          console.warn('Access denied: User is not an admin');
+        }
         break;
       default:
         navigate('/');
@@ -41,16 +58,20 @@ const NavigationWrapper = () => {
       setActiveTab={handleTabChange} 
       onSignOut={signOut} 
       className="navigation"
+      showAdminTab={isAdmin} // Just use isAdmin directly
     />
   );
 };
 
 function AppContent() {
   const navigate = useNavigate();
+  const { displayName } = useAuth();
   
   const renderHomePage = () => (
     <>
-      <h1 className="row_padding">Hi, <span className="bold_icon"> 👋</span></h1>
+      <h1 className="row_padding">
+        Hi{displayName ? `, ${displayName}` : ''}<span className="bold_icon"> 👋</span>
+      </h1>
       <div className="box_container">
         {/* Make entire box wrapper clickable */}
         <div 
@@ -81,25 +102,32 @@ function AppContent() {
         </div>
       </div>
       <div className="footer">
-        🥳 App successfully hosted.
+        <p>🥳 App successfully hosted.</p>
       </div>
     </>
   );
   
   return (
-    <main>
-      <Flex direction="column" gap="1rem">
-        <NavigationWrapper />
-        
+    <main className="app-container">
+      <NavigationWrapper />
+      
+      <div className="page-content">
         <Routes>
           <Route path="/" element={renderHomePage()} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<LecturesPage />} />
           <Route path="/courses/:courseId/lectures/:lectureId" element={<LectureDetailPage />} />
           <Route path="/courses/:courseId/lectures/:lectureId/quiz" element={<QuizPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          
+          {/* Protected Admin Routes */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin" element={<AdminPage />} />
+          </Route>
+          
+          {/* Catch-all route for unmatched paths */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Flex>
+      </div>
     </main>
   );
 }
@@ -107,7 +135,11 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AuthProvider>
+        <Authenticator>
+          {() => <AppContent />}
+        </Authenticator>
+      </AuthProvider>
     </Router>
   );
 }

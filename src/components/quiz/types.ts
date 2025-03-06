@@ -23,8 +23,8 @@ export interface QuizState {
 // Add this interface to match your DynamoDB schema
 export interface QuizRecord {
   id: string;
-  courseID: string;
-  lectureID: string;
+  courseId: string;
+  lectureId: string;
   question: string;
   options: string[];
   answer: string;
