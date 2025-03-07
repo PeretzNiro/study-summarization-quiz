@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Check for admin status in the token
         const session = await fetchAuthSession();
         const groups = session.tokens?.accessToken?.payload['cognito:groups'] as string[] || [];
-        const userIsAdmin = groups.includes('admin');
+        const userIsAdmin = groups.includes('Admins');
         
         // Update state and storage
         setIsAdmin(userIsAdmin);

@@ -5,7 +5,7 @@ export const lectures = defineStorage({
   isDefault: true,
   access: (allow) => ({
     'protected/*': [
-      allow.groups(['admin']).to(['read', 'write', 'delete']),
+      allow.groups(['Admins']).to(['read', 'write', 'delete']),
     ],
   })
 });
