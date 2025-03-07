@@ -13,7 +13,7 @@ const backend = defineBackend({
   data,
   lectures,
   processS3Upload,
-  storeLectureData
+  storeLectureData,
 });
 
 // // Add environment variable to the Lambda function

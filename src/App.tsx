@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthenticator, Authenticator } from '@aws-amplify/ui-react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import AdminPage from "./pages/AdminPage";
 import Navigation from "./components/nav/Navigation";
 import CoursesPage from "./pages/CoursesPage";
@@ -17,16 +17,31 @@ import './App.css';
 const NavigationWrapper = () => {
   const { signOut } = useAuthenticator();
   const navigate = useNavigate();
+  const location = useLocation(); // Get the current location
   
   // Get the stored active tab or default to 'main'
   const storedTab = sessionStorage.getItem('activeTab') || 'main';
   const [activeTab, setActiveTab] = useState(storedTab);
   
-  // Use auth context - remove isLoading since it's not used
-  const { isAdmin } = useAuth(); // Removed isLoading
+  // Use auth context
+  const { isAdmin } = useAuth();
   
-  // Don't rely on effectiveIsAdmin, just use isAdmin from context
-  // The context is already initialized with sessionStorage values
+  // Update active tab when location changes
+  useEffect(() => {
+    const path = location.pathname;
+    
+    // Map the current path to the appropriate tab
+    if (path === '/') {
+      setActiveTab('main');
+      sessionStorage.setItem('activeTab', 'main');
+    } else if (path.startsWith('/courses')) {
+      setActiveTab('courses');
+      sessionStorage.setItem('activeTab', 'courses');
+    } else if (path.startsWith('/admin')) {
+      setActiveTab('admin');
+      sessionStorage.setItem('activeTab', 'admin');
+    }
+  }, [location.pathname]);
   
   // Save active tab when it changes
   const handleTabChange = (tab: string) => {

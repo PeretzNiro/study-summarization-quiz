@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Flex,
   Button,
   Heading,
-  TextField,
   TextAreaField,
+  TextField,
   SelectField,
   Alert,
   Loader,
@@ -17,7 +17,8 @@ import { generateClient } from 'aws-amplify/api';
 import type { Schema } from '../../../../amplify/data/resource';
 import './CourseForm.css';
 import { CustomModal } from '../modal/CustomModal';
-
+import { Autocomplete } from '../common/Autocomplete';
+import { CourseService } from '../../../services/CourseService';
 
 const client = generateClient<Schema>();
 
@@ -39,11 +40,81 @@ const CourseForm: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [existingCourse, setExistingCourse] = useState<any>(null);
   
+  // For autocomplete functionality
+  const [courseIds, setCourseIds] = useState<string[]>([]);
+  const [isLoadingCourseIds, setIsLoadingCourseIds] = useState(false);
+  
+  // Load all course IDs on component mount
+  useEffect(() => {
+    loadCourseIds();
+  }, []);
+  
+  const loadCourseIds = async () => {
+    setIsLoadingCourseIds(true);
+    try {
+      const ids = await CourseService.getAllCourseIds();
+      setCourseIds(ids);
+    } catch (err) {
+      console.error('Error loading course IDs:', err);
+    } finally {
+      setIsLoadingCourseIds(false);
+    }
+  };
+  
+  const handleAutocompleteSelect = async (courseId: string) => {
+    setFormData({ ...formData, courseId });
+    
+    // When a course ID is selected, fetch details but don't show modal
+    if (courseId) {
+      setIsChecking(true);
+      try {
+        const course = await CourseService.getCourseById(courseId);
+        if (course) {
+          // Pre-fill the form with existing values
+          setFormData({
+            courseId: course.courseId,
+            title: course.title || '',
+            description: course.description || '',
+            difficulty: course.difficulty || 'easy'
+          });
+          
+          // Store existing course data but don't show modal yet
+          setExistingCourse(course);
+        } else {
+          // Clear existing course data if no course found
+          setExistingCourse(null);
+        }
+      } catch (err) {
+        console.error('Error fetching course details:', err);
+        // Clear existing course data on error
+        setExistingCourse(null);
+      } finally {
+        setIsChecking(false);
+      }
+    } else {
+      // Reset existing course data when no courseId is selected
+      setExistingCourse(null);
+    }
+  };
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
       [name]: value
+    });
+    
+    // Reset result state when form is being edited
+    if (showResult) {
+      setShowResult(false);
+      setUploadResult(null);
+    }
+  };
+  
+  const handleCourseIdChange = (value: string) => {
+    setFormData({
+      ...formData,
+      courseId: value
     });
     
     // Reset result state when form is being edited
@@ -102,6 +173,9 @@ const CourseForm: React.FC = () => {
           description: '',
           difficulty: 'easy'
         });
+        
+        // Refresh course IDs list
+        loadCourseIds();
       }
     } catch (err: any) {
       console.error('Error uploading course:', err);
@@ -116,19 +190,36 @@ const CourseForm: React.FC = () => {
     setShowModal(false);
     
     try {
-      // Update the existing course with new data
-      const updateResult = await client.models.Course.update({
+      // Make sure we have the required data
+      if (!existingCourse || !existingCourse.id) {
+        throw new Error("Cannot update course: missing course data");
+      }
+      
+      // Make sure we have at least some data to update
+      if (!formData.title && !formData.description && !formData.difficulty) {
+        throw new Error("Please provide at least one field to update");
+      }
+      
+      // Prepare update data - only include fields that have values
+      const updateData: any = {
         id: existingCourse.id,
-        courseId: formData.courseId,
-        title: formData.title || existingCourse.title,
-        description: formData.description || existingCourse.description,
-        difficulty: formData.difficulty || existingCourse.difficulty
-      });
+      };
+      
+      if (formData.title) updateData.title = formData.title;
+      if (formData.description) updateData.description = formData.description;
+      if (formData.difficulty) updateData.difficulty = formData.difficulty;
+      
+      console.log("Updating course with data:", updateData);
+  
+      // Update the existing course with new data
+      const updateResult = await client.models.Course.update(updateData);
+      
+      console.log("Update result:", updateResult);
       
       setUploadResult({
         success: true,
         message: "Course successfully updated!",
-        data: updateResult // Using data property which should be part of UploadResult type
+        data: updateResult
       });
       setShowResult(true);
       
@@ -142,6 +233,13 @@ const CourseForm: React.FC = () => {
     } catch (err: any) {
       console.error('Error updating course:', err);
       setError(`Update failed: ${err.message}`);
+      
+      setUploadResult({
+        success: false,
+        message: `Update failed: ${err.message}`,
+        errors: err
+      });
+      setShowResult(true);
     } finally {
       setIsLoading(false);
     }
@@ -167,14 +265,18 @@ const CourseForm: React.FC = () => {
         <Text>Fill in the course details to add a new course to the database</Text>
         
         <form onSubmit={handleSubmit}>
-          <TextField
+          <Autocomplete
             label="Course ID"
-            name="courseId"
             placeholder="e.g., COMP-1811"
             value={formData.courseId}
-            onChange={handleInputChange}
+            onChange={handleCourseIdChange}
+            onSelect={handleAutocompleteSelect}
+            options={courseIds}
+            isLoading={isLoadingCourseIds}
             isRequired={true}
-            marginTop="1rem"
+            descriptiveText="Enter a unique course ID or select an existing one to update"
+            name="courseId"
+            className="margin-top-1"
           />
           
           <TextField
