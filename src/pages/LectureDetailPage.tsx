@@ -2,7 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { generateClient } from 'aws-amplify/data';
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Schema } from '../../amplify/data/resource';
+import '../styles/Lectures.css';
 
 const client = generateClient<Schema>();
 type Lecture = Schema['Lecture']['type'];
@@ -133,25 +142,85 @@ const LectureDetailPage: React.FC = () => {
       <div className="lecture-header">
         <h1>{lecture.title}</h1>
         <div className="lecture-meta">
-          {lecture.duration && <span>Duration: {lecture.duration}</span>}
+          {lecture.duration && <span className="duration">Duration: <span className="amplify-badge amplify-badge--info">{lecture.duration}</span></span>}
           {lecture.difficulty && <span className={`difficulty ${lecture.difficulty.toLowerCase()}`}>
-            Level: {lecture.difficulty}
+            Level: <span className="amplify-badge amplify-badge--info">{lecture.difficulty}</span>
           </span>}
         </div>
       </div>
       
       <div className="lecture-content">
-        {/* Use safe rendering instead of dangerouslySetInnerHTML */}
-        <div className="content-text">
-          {lecture.content?.split('\n').map((paragraph, idx) => (
-            <p key={idx}>{paragraph}</p>
-          ))}
-        </div>
+        {lecture.content && (
+          <div className="content-markdown">
+            <div className="markdown-content">
+              <ReactMarkdown 
+                rehypePlugins={[rehypeRaw, rehypeKatex]}
+                remarkPlugins={[remarkGfm, remarkMath]}
+                components={{
+                  code({node, inline, className, children, ...props}: {
+                    node?: any;
+                    inline?: boolean;
+                    className?: string;
+                    children?: React.ReactNode;
+                    [key: string]: any;
+                  }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    return !inline && match ? (
+                      <SyntaxHighlighter
+                        style={vscDarkPlus}
+                        language={match[1]}
+                        PreTag="div"
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              >
+                {lecture.content}
+              </ReactMarkdown>
+            </div>
+          </div>
+        )}
         
         {lecture.summary && (
           <div className="lecture-summary">
-            <h3>Summary</h3>
-            <p>{lecture.summary}</p>
+            <ReactMarkdown 
+              rehypePlugins={[rehypeRaw, rehypeKatex]}
+              remarkPlugins={[remarkGfm, remarkMath]}
+              components={{
+                code({node, inline, className, children, ...props}: {
+                  node?: any;
+                  inline?: boolean;
+                  className?: string;
+                  children?: React.ReactNode;
+                  [key: string]: any;
+                }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline && match ? (
+                    <SyntaxHighlighter
+                      style={vscDarkPlus}
+                      language={match[1]}
+                      PreTag="div"
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                }
+              }}
+            >
+              {lecture.summary}
+            </ReactMarkdown>
           </div>
         )}
       </div>

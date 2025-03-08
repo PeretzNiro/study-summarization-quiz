@@ -7,7 +7,7 @@ import '../styles/AdminPage.css';
 
 const AdminPage: React.FC = () => {
   return (
-    <View padding="1rem">
+    <View>
       <Heading level={1} marginBottom="1.5rem" fontWeight="bold">Admin Dashboard</Heading>
       
       <Tabs

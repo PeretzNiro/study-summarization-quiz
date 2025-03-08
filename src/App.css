@@ -60,15 +60,19 @@
   }
   
   .page-content {
-    padding: 0.5rem;
+    padding: 0.5rem 0;
   }
-  
-  h1 {
-    font-size: 1.5rem;
+
+  .amplify-heading--1 {
+    font-size: 2rem !important;
   }
-  
-  h2 {
-    font-size: 1.25rem;
+
+  .amplify-heading--2 {
+    font-size: 1.5rem !important;
+  }
+
+  .amplify-heading--3 {
+    font-size: 1.17rem !important;
   }
 }
 
