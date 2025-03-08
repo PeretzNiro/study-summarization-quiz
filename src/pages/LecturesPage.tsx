@@ -2,14 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { generateClient } from 'aws-amplify/data';
 import { useAuthenticator } from '@aws-amplify/ui-react'; // Add this import
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Schema } from '../../amplify/data/resource';
 import { Course } from '../types/models';
 import '../styles/Lectures.css';
@@ -30,8 +23,7 @@ const LecturesPage: React.FC = () => {
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userProgress, setUserProgress] = useState<UserProgress | null>(null); // Add state for user progress
-  const [debugInfo] = useState<any>(null); // Add this debug state
+  const [, setUserProgress] = useState<UserProgress | null>(null); // Add state for user progress
   const [, setProgressLoading] = useState(false);
   const [completedLectureIds, setCompletedLectureIds] = useState<string[]>([]);
 
