@@ -226,3 +226,34 @@ code[class*="language-"] {
 .markdown-content h1 { font-size: 2rem; margin-top: 1.5rem; margin-bottom: 1rem; }
 .markdown-content h2 { font-size: 1.75rem; margin-top: 1.5rem; margin-bottom: 1rem; }
 /* etc. */
+
+/* Completion indicator */
+.completion-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+  margin-bottom: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: #4CAF50;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  vertical-align: middle;
+}
+
+/* Enhance the lecture card when it's completed */
+.lecture-card:has(.completion-indicator) {
+  border-left: 4px solid #4CAF50;
+}
+
+/* Add some hover effects for better UX */
+.completion-indicator {
+  transition: transform 0.2s;
+}
+
+.completion-indicator:hover {
+  transform: scale(1.2);
+}

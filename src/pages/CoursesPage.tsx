@@ -5,6 +5,7 @@ import type { Schema } from '../../amplify/data/resource';
 import { Course, UserProgress } from '../types/models';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { Loader, View, Heading, Text, Badge, Flex } from '@aws-amplify/ui-react';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 const client = generateClient<Schema>();
 
@@ -14,6 +15,7 @@ const CoursesPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthenticator((context) => [context.user]);
   const [userProgress, setUserProgress] = useState<Record<string, UserProgress>>({});
+  const [lectureCountByCourse, setLectureCountByCourse] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function fetchCourses() {
@@ -38,12 +40,28 @@ const CoursesPage: React.FC = () => {
     fetchCourses();
   }, []);
 
+  const getAuthenticatedClient = async () => {
+    try {
+      const { tokens } = await fetchAuthSession();
+      return generateClient<Schema>({
+        authMode: 'userPool',
+        authToken: tokens?.idToken?.toString()
+      });
+    } catch (error) {
+      console.error('Error getting authenticated client:', error);
+      return client;
+    }
+  };
+
   useEffect(() => {
     async function fetchUserProgress() {
       if (!user) return;
       
       try {
-        const { data, errors } = await client.models.UserProgress.list({
+        // Use authenticated client
+        const authClient = await getAuthenticatedClient();
+        
+        const { data, errors } = await authClient.models.UserProgress.list({
           filter: { userId: { eq: user.username } }
         });
         
@@ -78,6 +96,30 @@ const CoursesPage: React.FC = () => {
     fetchUserProgress();
   }, [user]);
 
+  useEffect(() => {
+    async function fetchLectureCounts() {
+      if (!courses || courses.length === 0) return;
+      
+      const counts: Record<string, number> = {};
+      
+      try {
+        for (const course of courses) {
+          const { data } = await client.models.Lecture.list({
+            filter: { courseId: { eq: course.courseId } }
+          });
+          
+          counts[course.courseId] = data?.length || 0;
+        }
+        
+        setLectureCountByCourse(counts);
+      } catch (error) {
+        console.error('Error fetching lecture counts:', error);
+      }
+    }
+    
+    fetchLectureCounts();
+  }, [courses]);
+
   if (loading) {
     return (
       <Flex direction="column" alignItems="center" justifyContent="center" padding="2rem">
@@ -109,6 +151,10 @@ const CoursesPage: React.FC = () => {
             const progress = userProgress[course.courseId];
             const hasProgress = !!progress;
             
+            // Calculate progress percentage
+            const progressPercent = hasProgress ? 
+              calculateProgress(progress, lectureCountByCourse) : 0;
+            
             return (
               <Link 
                 to={`/courses/${course.courseId}`}
@@ -127,25 +173,30 @@ const CoursesPage: React.FC = () => {
                     )}
                   </div>
                   
-                  {/* Progress indicator */}
-                  {hasProgress && (
-                    <div className="progress-indicator">
-                      <div className="progress-bar">
-                        <div 
-                          className="progress-fill" 
-                          style={{ width: `${calculateProgress(progress)}%` }}
-                        />
-                      </div>
-                      <Text fontSize="0.8rem">
-                        {progress.completedLectures.length} completed lectures
-                      </Text>
-                      {progress.lastAccessed && (
-                        <Text fontSize="0.75rem" color="var(--amplify-colors-neutral-60)">
-                          Last accessed: {formatDate(progress.lastAccessed)}
-                        </Text>
-                      )}
+                  {/* Progress indicator - always show for testing */}
+                  <div className="progress-indicator-course">
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill" 
+                        style={{ 
+                          width: `${progressPercent}%`,
+                          backgroundColor: hasProgress ? '#00A300' : '#cccccc'
+                        }}
+                      />
                     </div>
-                  )}
+                    <Text fontSize="0.8rem">
+                      {hasProgress ? (
+                        `${progress.completedLectures.length} of ${lectureCountByCourse[course.courseId] || '?'} lectures completed`
+                      ) : (
+                        'No progress yet'
+                      )}
+                    </Text>
+                    {hasProgress && progress.lastAccessed && (
+                      <Text fontSize="0.75rem" color="var(--amplify-colors-neutral-60)">
+                        Last accessed: {formatDate(progress.lastAccessed)}
+                      </Text>
+                    )}
+                  </div>
                 </div>
               </Link>
             );
@@ -166,10 +217,11 @@ function getDifficultyVariation(difficulty: string): "info" | "warning" | "error
   }
 }
 
-function calculateProgress(progress: UserProgress): number {
-  // You'll need to know the total number of lectures in the course
-  // For now, we'll just show a placeholder
-  return progress.completedLectures.length * 10; // Assuming 10 lectures per course
+function calculateProgress(progress: UserProgress, lectureCountByCourse: Record<string, number>): number {
+  const totalLectures = lectureCountByCourse[progress.courseId] || 10; // Default to 10 if unknown
+  if (totalLectures === 0) return 0;
+  
+  return Math.round((progress.completedLectures.length / totalLectures) * 100);
 }
 
 function formatDate(dateString: string): string {

@@ -12,9 +12,23 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import type { Schema } from '../../amplify/data/resource';
 import '../styles/Lectures.css';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 const client = generateClient<Schema>();
 type Lecture = Schema['Lecture']['type'];
+
+const getAuthenticatedClient = async () => {
+  try {
+    const { tokens } = await fetchAuthSession();
+    return generateClient<Schema>({
+      authMode: 'userPool',
+      authToken: tokens?.idToken?.toString()
+    });
+  } catch (error) {
+    console.error('Error getting authenticated client:', error);
+    return client;
+  }
+};
 
 const LectureDetailPage: React.FC = () => {
   const { courseId, lectureId } = useParams<{ courseId: string; lectureId: string }>();
@@ -26,6 +40,16 @@ const LectureDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [savingProgress, setSavingProgress] = useState(false);
   const [progressError, setProgressError] = useState<string | null>(null);
+  const [isLectureCompleted, setIsLectureCompleted] = useState(false);
+
+  // Helper function for badge variation
+  function getDifficultyVariation(difficulty: string): "info" | "warning" | "error" | "natural" {
+    const lowerDifficulty = difficulty.toLowerCase();
+    if (lowerDifficulty === 'easy') return "info";
+    if (lowerDifficulty === 'medium') return "warning";
+    if (lowerDifficulty === 'hard') return "error";
+    return "natural"; // Default
+  }
 
   useEffect(() => {
     async function fetchLectureDetails() {
@@ -71,8 +95,12 @@ const LectureDetailPage: React.FC = () => {
     async function updateUserProgress() {
       try {
         setSavingProgress(true);
+        
+        // Get authenticated client
+        const authClient = await getAuthenticatedClient();
+        
         // First check if a progress record exists
-        const { data: existingProgress } = await client.models.UserProgress.list({
+        const { data: existingProgress } = await authClient.models.UserProgress.list({
           filter: { 
             userId: { eq: user.username },
             courseId: { eq: courseId }
@@ -85,19 +113,25 @@ const LectureDetailPage: React.FC = () => {
           // Update existing record
           const currentProgress = existingProgress[0];
           const completedLectures = new Set(currentProgress.completedLectures || []);
+          
+          // Check if this lecture is already marked as completed
           if (lectureId) {
+            setIsLectureCompleted(completedLectures.has(lectureId));
             completedLectures.add(lectureId);
           }
           
-          await client.models.UserProgress.update({
+          await authClient.models.UserProgress.update({
             id: currentProgress.id,
             lectureId: lectureId, // Current lecture
             lastAccessed: now,
             completedLectures: Array.from(completedLectures)
           });
+
+          // Now it's definitely completed
+          setIsLectureCompleted(true);
         } else {
           // Create new progress record
-          await client.models.UserProgress.create({
+          await authClient.models.UserProgress.create({
             userId: user.username,
             courseId: courseId!,
             lectureId: lectureId!,
@@ -105,6 +139,9 @@ const LectureDetailPage: React.FC = () => {
             quizScores: {},
             lastAccessed: now
           });
+          
+          // Mark as completed since we just created a record with this lecture
+          setIsLectureCompleted(true);
         }
       } catch (error) {
         console.error('Error updating progress:', error);
@@ -140,11 +177,18 @@ const LectureDetailPage: React.FC = () => {
       </div>
       
       <div className="lecture-header">
-        <h1>{lecture.title}</h1>
+        <h1>
+          {lecture.title}
+          {isLectureCompleted && (
+            <span className="completion-indicator" title="Completed">✓</span>
+          )}
+        </h1>
         <div className="lecture-meta">
-          {lecture.duration && <span className="duration">Duration: <span className="amplify-badge amplify-badge--info">{lecture.duration}</span></span>}
+          {lecture.duration && <span className="duration">Duration: <span className="amplify-badge amplify-badge--natural">{lecture.duration}</span></span>}
           {lecture.difficulty && <span className={`difficulty ${lecture.difficulty.toLowerCase()}`}>
-            Level: <span className="amplify-badge amplify-badge--info">{lecture.difficulty}</span>
+            Level: <span className={`amplify-badge amplify-badge--${getDifficultyVariation(lecture.difficulty)}`}>
+              {lecture.difficulty}
+            </span>
           </span>}
         </div>
       </div>

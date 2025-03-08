@@ -22,7 +22,26 @@ export interface Lecture {
   readonly updatedAt?: string;
 }
 
+// Update your Quiz interface
 export interface Quiz {
+  id: string;
+  courseId: string;
+  lectureId: string;
+  quizId: string;
+  title: string;
+  description?: string;
+  questionIds: string[];  // This contains IDs, not the actual questions
+  passingScore?: number;
+  difficulty?: string;
+  order?: number;
+  isPersonalized?: boolean;
+  userId?: string;
+  readonly createdAt?: string;
+  readonly updatedAt?: string;
+}
+
+// Add a proper QuizQuestion interface
+export interface QuizQuestion {
   id: string;
   courseId: string;
   lectureId: string;
@@ -31,6 +50,7 @@ export interface Quiz {
   answer: string;
   explanation?: string;
   difficulty?: string;
+  topicTag?: string;
   readonly createdAt?: string;
   readonly updatedAt?: string;
 }

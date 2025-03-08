@@ -209,13 +209,10 @@ const CourseForm: React.FC = () => {
       if (formData.description) updateData.description = formData.description;
       if (formData.difficulty) updateData.difficulty = formData.difficulty;
       
-      console.log("Updating course with data:", updateData);
   
       // Update the existing course with new data
       const updateResult = await client.models.Course.update(updateData);
-      
-      console.log("Update result:", updateResult);
-      
+            
       setUploadResult({
         success: true,
         message: "Course successfully updated!",

@@ -38,8 +38,12 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+ul {
+  padding-inline-start: 20px;
+}
+
 li {
-  padding: 8px;
+  padding: 8px 0;
 }
 
 a {
@@ -69,7 +73,7 @@ a {
   -moz-box-shadow: 0px 1px 10px 1px #ccc;
   background-color: #fff;
   border-radius: 8px;
-  padding: 1rem 2rem;
+  padding: 1rem 1.5rem;
   transition: all var(--amplify-components-button-transition-duration);
 }
 
@@ -79,7 +83,7 @@ a {
   -moz-box-shadow: 0px 1px 10px 1px #ccc;
   background-color: #fff;
   border-radius: 8px;
-  padding: 1rem 2rem;
+  padding: 1rem 1.5rem;
   transition: all var(--amplify-components-button-transition-duration);
 }
 
@@ -145,4 +149,11 @@ a {
 
 .desktop-nav, .mobile-nav {
   transition: opacity 0.2s ease-in-out;
+}
+
+@media screen and (max-width: 768px) {
+  pre {
+    overflow-x: scroll;
+  }
+  
 }

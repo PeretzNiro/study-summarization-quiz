@@ -8,7 +8,10 @@ const schema = a.schema({
       description: a.string(),
       difficulty: a.string(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.publicApiKey().to(["read"]), // Anyone can read courses
+      allow.groups(["Admins"]).to(["create", "update", "delete"]) // Only Admins can modify
+    ]),
 
   Lecture: a
     .model({
@@ -20,7 +23,10 @@ const schema = a.schema({
       difficulty: a.string(),
       duration: a.string(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.publicApiKey().to(["read"]), // Anyone can read lectures
+      allow.groups(["Admins"]).to(["create", "update", "delete"]) // Only Admins can modify
+    ]),
 
   QuizQuestion: a
     .model({
@@ -33,7 +39,10 @@ const schema = a.schema({
       difficulty: a.string().required(),  // "easy", "medium", "hard"
       topicTag: a.string(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.publicApiKey().to(["read"]), // Anyone can read questions
+      allow.groups(["Admins"]).to(["create", "update", "delete"]) // Only Admins can modify
+    ]),
 
   Quiz: a
     .model({
@@ -49,7 +58,10 @@ const schema = a.schema({
       order: a.integer(),                  // Sequence in lecture (1, 2, 3)
       isPersonalized: a.boolean(),         // Flag to identify personalized quizzes
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.publicApiKey().to(["read"]), // Anyone can read quizzes
+      allow.groups(["Admins"]).to(["create", "update", "delete"]) // Only Admins can modify
+    ]),
 
   UserProgress: a
     .model({
@@ -61,10 +73,8 @@ const schema = a.schema({
       lastAccessed: a.string().required(),
     })
     .authorization((allow) => [
-      // Allow owners to read/write their own progress
-      allow.owner(),
-      // Allow admins to read all progress
-      allow.groups(["admin"]).to(["read"]),
+      allow.owner(), // Allow owners to read/write their own progress
+      allow.groups(["Admins"]).to(["read"]) // Allow Admins to read all progress
     ]),
 });
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { QuizQuestion, UserAnswer } from './types';
 
 interface QuizResultsProps {
@@ -7,6 +8,7 @@ interface QuizResultsProps {
   score: number;
   isPassed: boolean;
   onRestartQuiz: () => void;
+  courseId: string; // Add this prop to pass the courseId
 }
 
 const QuizResults: React.FC<QuizResultsProps> = ({
@@ -14,20 +16,39 @@ const QuizResults: React.FC<QuizResultsProps> = ({
   userAnswers,
   score,
   isPassed,
-  onRestartQuiz
+  onRestartQuiz,
+  courseId
 }) => {
+  const correctCount = userAnswers.filter((answer) => {
+    const question = questions.find(q => q.id === answer.questionId);
+    return question && answer.selectedAnswerIndex === question.correctAnswerIndex;
+  }).length;
+  
   return (
     <div className="quiz-results">
-      <h2>Quiz Results</h2>
-      
       <div className={`score-summary ${isPassed ? 'passed' : 'failed'}`}>
-        <h3>Your Score: {score.toFixed(1)}%</h3>
-        <p>{isPassed ? '🎉 Congratulations! You passed!' : '❌ You did not pass. Try again!'}</p>
+        <h2>Quiz Complete!</h2>
+        <p className="score">
+          Your Score: <strong>{Math.round(score)}%</strong>
+        </p>
+        <p>
+          You answered {correctCount} out of {questions.length} questions correctly.
+        </p>
+        <p className="status">
+          {isPassed ? 'Congratulations! You passed the quiz.' : 'You did not pass the quiz. Try again!'}
+        </p>
+        
+        <div className="action-buttons">
+          <button onClick={onRestartQuiz} className="btn btn-primary">
+            Take Quiz Again
+          </button>
+          
+          {/* Add the Return to Course button */}
+          <Link to={`/courses/${courseId}`} className="btn btn-secondary">
+            Return to Course
+          </Link>
+        </div>
       </div>
-      
-      <button onClick={onRestartQuiz} className="btn btn-primary">
-        Take Quiz Again
-      </button>
       
       <div className="results-details">
         <h3>Detailed Results</h3>
