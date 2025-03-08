@@ -271,7 +271,6 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQu
       return;
     }
   
-  
     try {
       // Get authenticated client
       const authClient = await getAuthenticatedClient();
@@ -320,9 +319,8 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQu
           completedLectures = [...completedLectures, lectureId];
         }
   
-        // Update the progress record
-  
-        const updated = await authClient.models.UserProgress.update({
+        // Update the progress record without storing the return value
+        await authClient.models.UserProgress.update({
           id: progress.id,
           completedLectures,
           quizScores: JSON.stringify(quizScores),
@@ -330,7 +328,7 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQu
         });
         
       } else {
-        // Create new progress record
+        // Create new progress record without storing the return value
         const quizScores = {
           [quizId]: {
             score,
@@ -339,7 +337,7 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQu
           }
         };
   
-        const created = await authClient.models.UserProgress.create({
+        await authClient.models.UserProgress.create({
           userId: user.username,
           courseId,
           lectureId,
@@ -347,7 +345,6 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQu
           quizScores: JSON.stringify(quizScores),
           lastAccessed: currentDate
         });
-        
       }
     } catch (error) {
       console.error('Error updating user progress:', error);
