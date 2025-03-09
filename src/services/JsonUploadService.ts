@@ -1,7 +1,6 @@
 import { generateClient } from "aws-amplify/api";
+import { fetchAuthSession } from 'aws-amplify/auth';
 import type { Schema } from "../../amplify/data/resource";
-
-const client = generateClient<Schema>();
 
 export interface UploadResult {
   success: boolean;
@@ -12,6 +11,21 @@ export interface UploadResult {
 }
 
 export class JsonUploadService {
+  // Add this method to get an authenticated client
+  private async getAuthenticatedClient() {
+    try {
+      const { tokens } = await fetchAuthSession();
+      return generateClient<Schema>({
+        authMode: 'userPool',
+        authToken: tokens?.idToken?.toString()
+      });
+    } catch (error) {
+      console.error('Error getting authenticated client:', error);
+      // Fall back to regular client if authentication fails
+      return generateClient<Schema>();
+    }
+  }
+
   async uploadToTable(tableName: string, jsonData: any): Promise<UploadResult> {
     try {
       // Ensure we have an array of records
@@ -53,20 +67,23 @@ export class JsonUploadService {
       
       return {
         success: true,
-        message: `Successfully uploaded ${results.length} records to ${tableName}`,
-        records: results
+        message: `Successfully uploaded ${results.length} records`,
+        data: results
       };
-    } catch (err: any) {
-      console.error('Error in uploadToTable:', err);
+    } catch (error: any) {
+      console.error('Upload error:', error);
       return {
         success: false,
-        message: err.message || 'Error uploading data'
+        message: error.message || 'Unknown error occurred'
       };
     }
   }
   
   private async saveRecord(tableName: string, data: any): Promise<any> {
     try {
+      // Get authenticated client for this operation
+      const client = await this.getAuthenticatedClient();
+      
       switch (tableName) {
         case 'Course':
           return await client.models.Course.create(data);

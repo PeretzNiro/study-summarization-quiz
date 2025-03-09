@@ -1,4 +1,5 @@
 import { generateClient } from 'aws-amplify/api';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import type { Schema } from '../../amplify/data/resource';
 
 const client = generateClient<Schema>();
@@ -12,6 +13,44 @@ export interface CourseData {
 }
 
 export class CourseService {
+  static async getAuthenticatedClient() {
+    try {
+      const { tokens } = await fetchAuthSession();
+      return generateClient<Schema>({
+        authMode: 'userPool',
+        authToken: tokens?.idToken?.toString()
+      });
+    } catch (error) {
+      console.error('Error getting authenticated client:', error);
+      return generateClient<Schema>();
+    }
+  }
+
+  static async createCourse(courseData: any) {
+    try {
+      const client = await this.getAuthenticatedClient();
+      const result = await client.models.Course.create(courseData);
+      return result.data;
+    } catch (error) {
+      console.error('Error creating course:', error);
+      throw error;
+    }
+  }
+
+  static async updateCourse(id: string, courseData: any) {
+    try {
+      const client = await this.getAuthenticatedClient();
+      const result = await client.models.Course.update({
+        id,
+        ...courseData,
+      });
+      return result.data;
+    } catch (error) {
+      console.error('Error updating course:', error);
+      throw error;
+    }
+  }
+
   /**
    * Get all available courses
    * @returns List of course IDs and titles

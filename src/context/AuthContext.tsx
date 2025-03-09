@@ -8,6 +8,9 @@ interface AuthContextType {
   isLoading: boolean;
   username: string;
   displayName: string;
+  signOut: () => void;
+  checkUserRole: () => Promise<void>;
+  getAuthToken: () => Promise<string | undefined>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -15,13 +18,18 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   username: '',
-  displayName: ''
+  displayName: '',
+  signOut: () => {},
+  checkUserRole: async () => {},
+  getAuthToken: async () => undefined
 });
 
-// In your AuthProvider component
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { authStatus, user } = useAuthenticator((context) => [context.authStatus, context.user]);
+  const { authStatus, user, signOut } = useAuthenticator((context) => [
+    context.authStatus, 
+    context.user,
+    context.signOut
+  ]);
   
   // Get initial values from sessionStorage to prevent UI flicker
   const storedIsAdmin = sessionStorage.getItem('isAdmin') === 'true';
@@ -34,69 +42,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsername] = useState<string>(storedUsername);
   const [displayName, setDisplayName] = useState<string>(storedDisplayName);
 
-  useEffect(() => {
-    async function checkUserRole() {
-      try {
-        // Handle unauthenticated state
-        if (authStatus !== 'authenticated') {
-          setIsAdmin(false);
-          setIsLoading(false);
-          // Clear session storage on logout
-          sessionStorage.removeItem('isAdmin');
-          sessionStorage.removeItem('username');
-          sessionStorage.removeItem('displayName');
-          sessionStorage.removeItem('currentUser');
-          return;
-        }
-
-        // Check if this is the same user and we already have admin info
-        const cachedUser = sessionStorage.getItem('currentUser');
-        const hasStoredAdminStatus = sessionStorage.getItem('isAdmin') !== null;
-        
-        if (cachedUser && authStatus === 'authenticated' && hasStoredAdminStatus) {
-          // Use cached data immediately (UI won't show loading state)
-          setIsLoading(false);
-        } else {
-          // No cached data, show loading state
-          setIsLoading(true);
-        }
-
-        // Get user attributes
-        const userAttributes = await fetchUserAttributes();
-        const email = userAttributes.email || '';
-        
-        // Format display name
-        const rawName = email.split('@')[0] || '';
-        if (rawName) {
-          const formatted = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-          setDisplayName(formatted);
-          sessionStorage.setItem('displayName', formatted);
-        }
-        
-        // Save user info
-        setUsername(email);
-        sessionStorage.setItem('username', email);
-        sessionStorage.setItem('currentUser', email);
-        
-        // Check for admin status in the token
-        const session = await fetchAuthSession();
-        const groups = session.tokens?.accessToken?.payload['cognito:groups'] as string[] || [];
-        const userIsAdmin = groups.includes('Admins');
-        
-        // Update state and storage
-        setIsAdmin(userIsAdmin);
-        sessionStorage.setItem('isAdmin', userIsAdmin ? 'true' : 'false');
-        
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
-        sessionStorage.setItem('isAdmin', 'false');
-      } finally {
-        // Clear loading state
-        setIsLoading(false);
-      }
+  // Method to check user role
+  const checkUserRole = async () => {
+    if (authStatus !== 'authenticated' || !user) {
+      // Clear stored values when not authenticated
+      setIsAdmin(false);
+      setUsername('');
+      setDisplayName('');
+      sessionStorage.removeItem('isAdmin');
+      sessionStorage.removeItem('username');
+      sessionStorage.removeItem('displayName');
+      sessionStorage.removeItem('currentUser');
+      setIsLoading(false);
+      return;
     }
-    
+
+    try {
+      setIsLoading(true);
+      
+      // Get user details from Cognito
+      const userAttributes = await fetchUserAttributes();
+      const email = userAttributes.email || user.username || '';
+      
+      // Format display name
+      const rawName = email.split('@')[0] || '';
+      if (rawName) {
+        const formatted = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+        setDisplayName(formatted);
+        sessionStorage.setItem('displayName', formatted);
+      }
+      
+      // Save user info
+      setUsername(email);
+      sessionStorage.setItem('username', email);
+      sessionStorage.setItem('currentUser', email);
+      
+      // Check for admin status in the token
+      const session = await fetchAuthSession();
+      const groups = session.tokens?.accessToken?.payload['cognito:groups'] as string[] || [];
+      const userIsAdmin = groups.includes('Admins');
+      
+      // Update state and storage
+      setIsAdmin(userIsAdmin);
+      sessionStorage.setItem('isAdmin', userIsAdmin ? 'true' : 'false');
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+      setIsAdmin(false);
+      sessionStorage.setItem('isAdmin', 'false');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Method to get auth token (useful for authenticated API calls)
+  const getAuthToken = async (): Promise<string | undefined> => {
+    try {
+      const { tokens } = await fetchAuthSession();
+      return tokens?.idToken?.toString();
+    } catch (error) {
+      console.error('Error getting auth token:', error);
+      return undefined;
+    }
+  };
+
+  useEffect(() => {
     checkUserRole();
   }, [authStatus, user]);
 
@@ -106,7 +115,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAuthenticated: authStatus === 'authenticated', 
       isLoading,
       username,
-      displayName
+      displayName,
+      signOut,
+      checkUserRole,
+      getAuthToken
     }}>
       {children}
     </AuthContext.Provider>

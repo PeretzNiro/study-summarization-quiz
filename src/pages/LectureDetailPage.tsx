@@ -114,34 +114,33 @@ const LectureDetailPage: React.FC = () => {
           const currentProgress = existingProgress[0];
           const completedLectures = new Set(currentProgress.completedLectures || []);
           
-          // Check if this lecture is already marked as completed
+          // CHECK if this lecture is already marked as completed, but DON'T add it
           if (lectureId) {
             setIsLectureCompleted(completedLectures.has(lectureId));
-            completedLectures.add(lectureId);
           }
           
+          // Update the last accessed timestamp, but don't modify completed lectures
           await authClient.models.UserProgress.update({
             id: currentProgress.id,
             lectureId: lectureId, // Current lecture
             lastAccessed: now,
-            completedLectures: Array.from(completedLectures)
+            // Don't change completedLectures here
           });
-
-          // Now it's definitely completed
-          setIsLectureCompleted(true);
+          
+          // Don't set isLectureCompleted to true automatically
         } else {
-          // Create new progress record
+          // Create new progress record WITHOUT marking lecture as completed
           await authClient.models.UserProgress.create({
             userId: user.username,
             courseId: courseId!,
             lectureId: lectureId!,
-            completedLectures: [lectureId!],
+            completedLectures: [], // Start with empty array
             quizScores: {},
             lastAccessed: now
           });
           
-          // Mark as completed since we just created a record with this lecture
-          setIsLectureCompleted(true);
+          // Set as not completed initially
+          setIsLectureCompleted(false);
         }
       } catch (error) {
         console.error('Error updating progress:', error);
