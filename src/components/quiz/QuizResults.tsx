@@ -35,16 +35,16 @@ const QuizResults: React.FC<QuizResultsProps> = ({
           You answered {correctCount} out of {questions.length} questions correctly.
         </p>
         <p className="status">
-          {isPassed ? 'Congratulations! You passed the quiz.' : 'You did not pass the quiz. Try again!'}
+          {isPassed ? '🎉 Congratulations! You passed the quiz.' : '😔 You did not pass the quiz. Try again!'}
         </p>
         
         <div className="action-buttons">
-          <button onClick={onRestartQuiz} className="btn btn-primary">
+          <button onClick={onRestartQuiz} className="amplify-button amplify-button--primary">
             Take Quiz Again
           </button>
           
           {/* Add the Return to Course button */}
-          <Link to={`/courses/${courseId}`} className="btn btn-secondary">
+          <Link to={`/courses/${courseId}`} className="amplify-button amplify-button--primary--overlay">
             Return to Course
           </Link>
         </div>
