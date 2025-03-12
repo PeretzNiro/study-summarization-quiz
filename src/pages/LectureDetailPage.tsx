@@ -271,7 +271,7 @@ const LectureDetailPage: React.FC = () => {
       <div className="lecture-actions">
         <button 
           onClick={handleStartQuiz}
-          className="btn btn-primary start-quiz-btn"
+          className="amplify-button amplify-button--primary start-quiz-btn"
         >
           Start Quiz for this Lecture
         </button>

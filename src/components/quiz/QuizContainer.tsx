@@ -82,35 +82,61 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQu
         // Save the quizId for later use
         setQuizId(quiz.quizId);
         
-        // Step 2: Get all quiz questions for this lecture directly
-        const { data: questionRecords } = await client.models.QuizQuestion.list({
-          filter: {
-            courseId: { eq: courseId },
-            lectureId: { eq: lectureId },
-          },
-        });
+        // Extract question IDs from the quiz
+        const questionIds = quiz.questionIds || [];
+        
+        if (questionIds.length === 0) {
+          setQuestions([]);
+          setError("No questions assigned to this quiz.");
+          return;
+        }
+        
+        // Step 2: Get only the specific questions listed in the quiz
+        const questionPromises = questionIds
+          .filter((id): id is string => id !== null && id !== undefined) // Filter out null/undefined values
+          .map(id => 
+            client.models.QuizQuestion.get({ id })
+          );
+        
+        const questionResults = await Promise.all(questionPromises);
+        const questionRecords = questionResults
+          .filter(result => result.data !== null)
+          .map(result => result.data);
         
         if (!questionRecords || questionRecords.length === 0) {
           setQuestions([]);
-          setError("No questions found for this quiz.");
+          setError("Could not load questions for this quiz.");
           return;
         }
         
         // Transform the quiz questions to our format
         const transformedQuestions: QuizQuestion[] = questionRecords.map((item) => {
           return {
-            id: item.id || `temp-${Math.random().toString(36).substring(2, 9)}`,
-            question: item.question || 'Question text unavailable',
-            answerChoices: (item.options || ['Option A', 'Option B', 'Option C', 'Option D']).filter((option): option is string => option !== null),
-            correctAnswerIndex: item.options ? item.options.indexOf(item.answer) : 0,
-            explanation: item.explanation || 'No explanation available',
+            id: item?.id || `temp-${Math.random().toString(36).substring(2, 9)}`,
+            question: item?.question || 'Question text unavailable',
+            answerChoices: (item?.options || ['Option A', 'Option B', 'Option C', 'Option D']).filter((option): option is string => option !== null),
+            correctAnswerIndex: item?.options ? item.options.indexOf(item.answer) : 0,
+            explanation: item?.explanation || 'No explanation available',
           };
         });
         
-        setQuestions(transformedQuestions);
+        // After fetching and transforming questions, before setting them in state
+        // Shuffle the questions array for randomized order
+        const shuffleArray = (array: QuizQuestion[]) => {
+          const shuffled = [...array];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          return shuffled;
+        };
+
+        // Randomize the questions
+        const randomizedQuestions = shuffleArray(transformedQuestions);
+        setQuestions(randomizedQuestions);
         
         // Initialize user answers
-        const initialAnswers = transformedQuestions.map(q => ({
+        const initialAnswers = randomizedQuestions.map(q => ({
           questionId: q.id,
           selectedAnswerIndex: null,
         }));

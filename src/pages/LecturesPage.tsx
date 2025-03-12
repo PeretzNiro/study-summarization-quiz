@@ -208,34 +208,34 @@ const LecturesPage: React.FC = () => {
                   <div key={lecture.lectureId} className="lecture-card">
                     <div className="lecture-content">
                       <h2>
-                        {lecture.title}
-                        {isCompleted && (
-                        <span className="completion-indicator" title="Completed">✓</span>
-                        )}
+                      {lecture.title}
+                      {isCompleted && (
+                      <span className="completion-indicator" title="Completed">✓</span>
+                      )}
                       </h2>
                       
                       <div className="lecture-meta">
-                        {lecture.duration && (
-                          <span className="duration">
-                            Duration: <span className="amplify-badge amplify-badge--natural">{lecture.duration}</span>
-                          </span>
-                        )}
-                        {lecture.difficulty && (
-                          <span className={`difficulty ${lecture.difficulty.toLowerCase()}`}>
-                            Level: <span className={`amplify-badge amplify-badge--${getDifficultyVariation(lecture.difficulty)}`}>
-                              {lecture.difficulty}
-                            </span>
-                          </span>
-                        )}
+                      {lecture.duration && (
+                        <span className="duration">
+                        Duration: <span className="amplify-badge amplify-badge--natural">{lecture.duration}</span>
+                        </span>
+                      )}
+                      {lecture.difficulty && (
+                        <span className={`difficulty ${lecture.difficulty.toLowerCase()}`}>
+                        Level: <span className={`amplify-badge amplify-badge--${getDifficultyVariation(lecture.difficulty)}`}>
+                          {lecture.difficulty}
+                        </span>
+                        </span>
+                      )}
                       </div>
                     </div>
                     <div className="lecture-actions">
-                      <Link to={`/courses/${courseId}/lectures/${lecture.lectureId}`} className="btn btn-primary">
+                      <Link to={`/courses/${courseId}/lectures/${lecture.lectureId}`} className="amplify-button amplify-button--primary">
                         {isLectureCompleted(lecture.lectureId) ? "Review Lecture" : "View Lecture"}
                       </Link>
                       <button 
                         onClick={() => handleStartQuiz(lecture.lectureId)} 
-                        className="btn btn-secondary"
+                        className="amplify-button amplify-button--primary--overlay"
                       >
                         Start Quiz
                       </button>

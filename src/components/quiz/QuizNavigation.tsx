@@ -29,7 +29,7 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
         <button 
           onClick={goToPreviousQuestion}
           disabled={currentQuestionIndex === 0 || isSubmitted}
-          className="btn btn-secondary"
+          className="amplify-button amplify-button--primary--overlay"
         >
           Previous
         </button>
@@ -37,7 +37,7 @@ const QuizNavigation: React.FC<QuizNavigationProps> = ({
         {currentQuestionIndex < totalQuestions - 1 ? (
           <button 
             onClick={goToNextQuestion}
-            className="btn btn-primary"
+            className="amplify-button amplify-button--primary"
             disabled={isSubmitted}
           >
             Next
