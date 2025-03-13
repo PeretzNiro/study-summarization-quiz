@@ -231,12 +231,15 @@ const LectureDetailPage: React.FC = () => {
           </div>
         )}
         
-        {lecture.summary && (
+        {lecture.summary ? (
           <div className="lecture-summary">
             <ReactMarkdown 
               rehypePlugins={[rehypeRaw, rehypeKatex]}
               remarkPlugins={[remarkGfm, remarkMath]}
               components={{
+                h1: ({node, children, ...props}) => <h2 className="summary-heading" {...props}>{children}</h2>,
+                h2: ({node, children, ...props}) => <h3 className="summary-heading" {...props}>{children}</h3>,
+                h3: ({node, children, ...props}) => <h4 className="summary-heading" {...props}>{children}</h4>,
                 code({node, inline, className, children, ...props}: {
                   node?: any;
                   inline?: boolean;
@@ -250,6 +253,9 @@ const LectureDetailPage: React.FC = () => {
                       style={vscDarkPlus}
                       language={match[1]}
                       PreTag="div"
+                      customStyle={{
+                        borderRadius: '8px'
+                      }}
                       {...props}
                     >
                       {String(children).replace(/\n$/, '')}
@@ -265,6 +271,8 @@ const LectureDetailPage: React.FC = () => {
               {lecture.summary}
             </ReactMarkdown>
           </div>
+        ) : (
+          <div className="lecture-summary-error">No summary found for this lecture.</div>
         )}
       </div>
       

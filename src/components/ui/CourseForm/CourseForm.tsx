@@ -27,7 +27,7 @@ const CourseForm: React.FC = () => {
     courseId: '',
     title: '',
     description: '',
-    difficulty: 'easy' // Default value
+    difficulty: '' 
   });
   
   const [isLoading, setIsLoading] = useState(false);

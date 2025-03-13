@@ -163,7 +163,7 @@ const CoursesPage: React.FC = () => {
               >
                 <div className="course-content">
                   <h2>{course.title}</h2>
-                  {course.description && <p>{course.description}</p>}
+                  {/* {course.description && <p>{course.description}</p>} */}
                   
                   <div className="course-details">
                     {course.difficulty && (

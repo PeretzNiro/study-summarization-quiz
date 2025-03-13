@@ -257,3 +257,17 @@ code[class*="language-"] {
 .completion-indicator:hover {
   transform: scale(1.2);
 }
+
+.lecture-summary-error {
+  text-align: center;
+  padding: 3rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  -webkit-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  -moz-box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin: 2rem auto;
+  max-width: 500px;
+  color: #f44336;
+  border-left: 4px solid #f44336
+}
