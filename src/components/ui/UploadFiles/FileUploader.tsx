@@ -273,7 +273,7 @@ const FileUpload: React.FC = () => {
           </>
         ) : (
           <>
-            <Alert variation="info" marginBottom="1rem">
+            <Alert className='radius-s' variation="info" marginBottom="1rem">
               Files will be uploaded to folder: <strong>{folderName}</strong>
             </Alert>
             
@@ -283,7 +283,7 @@ const FileUpload: React.FC = () => {
               ref={fileInputRef}
               style={{ display: 'none' }}
               onChange={handleFileSelect}
-              accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+              accept=".pdf,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
             />
             
             {/* Custom upload button */}
@@ -299,7 +299,7 @@ const FileUpload: React.FC = () => {
             </Button>
 
             {isUploading && (
-              <Alert variation="info" marginBottom="1rem">
+              <Alert className='radius-s' variation="info" marginBottom="1rem">
                 Uploading... Please wait.
               </Alert>
             )}
@@ -309,6 +309,7 @@ const FileUpload: React.FC = () => {
                 <Heading level={5} marginTop="1.5rem" marginBottom="0.5rem">Upload Results:</Heading>
                 {uploadResults.map((result, index) => (
                   <Alert
+                    className='radius-s'
                     key={index}
                     variation={result.status === 'success' ? 'success' : 'error'}
                     marginBottom="0.5rem"
@@ -336,6 +337,7 @@ const FileUpload: React.FC = () => {
       
       {uploadStatus && !showUploader && (
         <Alert 
+          className='radius-s'
           variation={uploadStatus.includes('failed') || uploadStatus.includes('Error') ? 'error' : 
                     uploadStatus.includes('successful') || uploadStatus.includes('replaced') ? 'success' : 'info'}
           marginTop="1rem"
@@ -353,7 +355,7 @@ const FileUpload: React.FC = () => {
         <div className="modal-body">
           <Text>A file named <strong>{duplicateFileName}</strong> already exists in the folder <strong>{folderName}</strong>.</Text>
           
-          <Alert variation="warning" marginTop="1rem">
+          <Alert className='radius-s' variation="warning" marginTop="1rem">
             Would you like to replace the existing file?
           </Alert>
         </div>

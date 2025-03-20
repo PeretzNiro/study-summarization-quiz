@@ -24,7 +24,7 @@ const AdminRoute = () => {
   if (!isAdmin) {
     return (
       <Flex direction="column" alignItems="center" justifyContent="center" padding="2rem">
-        <Alert variation="error" heading="Access Denied">
+        <Alert className='radius-s' variation="error" heading="Access Denied">
           <Text fontWeight="bold">
             You do not have permission to access this page.
           </Text>

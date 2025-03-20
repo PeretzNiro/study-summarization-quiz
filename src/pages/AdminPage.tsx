@@ -3,6 +3,7 @@ import { Heading, View, Tabs, Divider } from '@aws-amplify/ui-react';
 import JsonUploader from '../components/ui/JsonUploader/JsonUploader';
 import FileUploader from '../components/ui/UploadFiles/FileUploader';
 import CourseForm from '../components/ui/CourseForm/CourseForm';
+import ContentManager from '../components/ui/ContentManager/ContentManager';
 import '../styles/AdminPage.css';
 
 const AdminPage: React.FC = () => {
@@ -37,7 +38,7 @@ const AdminPage: React.FC = () => {
       
       <Divider marginTop="2rem" marginBottom="2rem" />
       <Heading level={3} marginBottom="1rem">Manage Uploaded Content</Heading>
-
+      <ContentManager />
     </View>
   );
 };

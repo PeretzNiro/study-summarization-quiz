@@ -223,7 +223,7 @@ const JsonUploader: React.FC = () => {
       </Flex>
       
       {error && (
-        <Alert variation="error" marginTop="1rem">{error}</Alert>
+        <Alert className='radius-s' variation="error" marginTop="1rem">{error}</Alert>
       )}
     </Card>
   );
@@ -231,7 +231,7 @@ const JsonUploader: React.FC = () => {
   const renderAnalyzeStep = () => {
     if (!tableDetectionResults.length) {
       return (
-        <Alert variation="warning">
+        <Alert className='radius-s' variation="warning">
           No tables matched your data structure. Please check your JSON format.
         </Alert>
       );
@@ -313,11 +313,11 @@ const JsonUploader: React.FC = () => {
           <>
             <Heading className='padding-bottom' level={4}>Validation Result</Heading>
             {validationResult.isValid ? (
-              <Alert variation="success">
+              <Alert className='radius-s' variation="success">
                 Your data is valid for the {selectedTable} table.
               </Alert>
             ) : (
-              <Alert variation="warning">
+              <Alert className='radius-s' variation="warning">
                 <Text>Your data is missing required fields for the {selectedTable} table:</Text>
                 <Flex direction="row" wrap="wrap" gap="0.5rem" marginTop="0.5rem">
                   {validationResult.missingFields.map(field => (
@@ -352,11 +352,11 @@ const JsonUploader: React.FC = () => {
         <Heading className='heading-margin' level={3}>3. Upload Results</Heading>
         
         {uploadResult.success ? (
-          <Alert variation="success" marginTop="1rem">
+          <Alert className='radius-s' variation="success" marginTop="1rem">
             {uploadResult.message}
           </Alert>
         ) : (
-          <Alert variation="error" marginTop="1rem">
+          <Alert className='radius-s' variation="error" marginTop="1rem">
             {uploadResult.message}
           </Alert>
         )}
@@ -441,7 +441,7 @@ const JsonUploader: React.FC = () => {
             </div>
           )}
           
-          <Alert variation="warning" marginTop="1rem">
+          <Alert className='radius-s' variation="warning" marginTop="1rem">
             Would you like to update this record with your new data?
           </Alert>
         </div>

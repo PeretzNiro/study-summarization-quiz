@@ -119,6 +119,20 @@ a {
   border-radius: 8px !important;
 }
 
+.radius-s {
+  border-radius: 4px !important;
+}
+
+.flex-gap {
+  display: flex !important;
+  gap: 0.5rem !important;
+  flex-wrap: wrap !important;
+}
+
+.flex-wrap {
+  flex-wrap: wrap !important;
+}
+
 .footer {
   text-align: center;
   padding: 1rem;
@@ -163,4 +177,16 @@ a {
     overflow-x: scroll;
   }
   
+}
+
+@media screen and (max-width: 1001px) {
+  .overflow-x-scroll {
+    overflow-x: scroll !important;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  .content-manager-tabs > div {
+    overflow-x: scroll !important;
+  }
 }

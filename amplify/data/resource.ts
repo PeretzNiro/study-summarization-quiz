@@ -10,7 +10,7 @@ const schema = a.schema({
     })
     .authorization((allow) => [
       allow.publicApiKey().to(["read"]), // Anyone can read courses
-      allow.groups(["Admins"]).to(["create", "update", "delete"]) // Only Admins can modify
+      allow.groups(["Admins"]).to(["create", "update", "delete", "read"]) // Only Admins can modify
     ]),
 
   Lecture: a
@@ -22,10 +22,13 @@ const schema = a.schema({
       summary: a.string(),
       difficulty: a.string(),
       duration: a.string(),
+      fileName: a.string(),
+      fileType: a.string(),
+      status: a.string(),
     })
     .authorization((allow) => [
       allow.publicApiKey().to(["read"]), // Anyone can read lectures
-      allow.groups(["Admins"]).to(["create", "update", "delete"]) // Only Admins can modify
+      allow.groups(["Admins"]).to(["create", "update", "delete", "read"]) // Only Admins can modify
     ]),
 
   QuizQuestion: a
@@ -38,10 +41,12 @@ const schema = a.schema({
       explanation: a.string(),
       difficulty: a.string().required(),  // "easy", "medium", "hard"
       topicTag: a.string(),
+      reviewStatus: a.string(),          // "pending", "approved", "rejected"
+      isApproved: a.boolean(),           // Flag for approved questions
     })
     .authorization((allow) => [
       allow.publicApiKey().to(["read"]), // Anyone can read questions
-      allow.groups(["Admins"]).to(["create", "update", "delete"]) // Only Admins can modify
+      allow.groups(["Admins"]).to(["create", "update", "delete", "read"]) // Only Admins can modify
     ]),
 
   Quiz: a
@@ -60,7 +65,7 @@ const schema = a.schema({
     })
     .authorization((allow) => [
       allow.publicApiKey().to(["read"]), // Anyone can read quizzes
-      allow.groups(["Admins"]).to(["create", "update", "delete"]) // Only Admins can modify
+      allow.groups(["Admins"]).to(["create", "update", "delete", "read"]) // Only Admins can modify
     ]),
 
   UserProgress: a

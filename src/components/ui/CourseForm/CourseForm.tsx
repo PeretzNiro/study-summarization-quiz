@@ -308,18 +308,18 @@ const CourseForm: React.FC = () => {
           </SelectField>
           
           {error && (
-            <Alert variation="error" marginTop="1rem">{error}</Alert>
+            <Alert className='radius-s' variation="error" marginTop="1rem">{error}</Alert>
           )}
           
           {showResult && uploadResult && (
             <>
               <Divider marginTop="1.5rem" marginBottom="1rem" />
               {uploadResult.success ? (
-                <Alert variation="success">
+                <Alert className='radius-s' variation="success">
                   {uploadResult.message || "Course successfully added to the database!"}
                 </Alert>
               ) : (
-                <Alert variation="error">
+                <Alert className='radius-s' variation="error">
                   {uploadResult.message}
                 </Alert>
               )}
@@ -370,7 +370,7 @@ const CourseForm: React.FC = () => {
           <Text><strong>Description:</strong> {existingCourse?.description || "N/A"}</Text>
           <Text><strong>Difficulty:</strong> {existingCourse?.difficulty || "N/A"}</Text>
           
-          <Alert variation="warning" marginTop="1rem">
+          <Alert className='radius-s' variation="warning" marginTop="1rem">
             Would you like to update this course with your new information?
           </Alert>
         </div>
