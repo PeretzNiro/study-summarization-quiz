@@ -57,6 +57,9 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
   // Add state for success/error/info messages
   const [actionMessage, setActionMessage] = useState<ActionMessage | null>(null);
 
+  // Add isRefreshing state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     setQuestionCourseFilter(courseFilter);
   }, [courseFilter]);
@@ -109,10 +112,22 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
   }, [questionCourseFilter, questionLectureFilter, lectures, getAuthenticatedClient]);
 
   // Filter quiz questions by search term
-  const filteredQuestions = quizQuestions.filter(question => 
-    question.question?.toLowerCase().includes(questionSearch.toLowerCase()) ||
-    question.topicTag?.toLowerCase().includes(questionSearch.toLowerCase())
-  );
+  const filteredQuestions = quizQuestions
+    .filter(question => 
+      question.question?.toLowerCase().includes(questionSearch.toLowerCase()) ||
+      question.topicTag?.toLowerCase().includes(questionSearch.toLowerCase())
+    )
+    // Add sorting to show pending questions first
+    .sort((a, b) => {
+      // First sort by approval status (pending first)
+      if (a.isApproved && !b.isApproved) return 1;
+      if (!a.isApproved && b.isApproved) return -1;
+      
+      // Then sort by creation date (newest first) within each group
+      const aDate = new Date(a.createdAt || 0);
+      const bDate = new Date(b.createdAt || 0);
+      return bDate.getTime() - aDate.getTime();
+    });
 
   // Paginate quiz questions
   const paginatedQuestions = filteredQuestions.slice(
@@ -255,6 +270,41 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
     });
   };
 
+  // Add handleRefresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      setQuestionsLoading(true);
+      setQuestionsError(null);
+      
+      let filter: any = {};
+      if (questionCourseFilter) {
+        filter.courseId = { eq: questionCourseFilter };
+      }
+      if (questionLectureFilter) {
+        filter.lectureId = { eq: questionLectureFilter };
+      }
+      
+      const authClient = await getAuthenticatedClient();
+      const { data, errors } = await authClient.models.QuizQuestion.list({
+        filter: Object.keys(filter).length > 0 ? filter : undefined
+      });
+      
+      if (errors) {
+        console.error('GraphQL errors:', errors);
+        throw new Error(errors[0].message);
+      }
+      
+      setQuizQuestions(data || []);
+    } catch (error) {
+      console.error('Error refreshing quiz questions:', error);
+      setQuestionsError('Failed to refresh quiz questions');
+    } finally {
+      setQuestionsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
   // Render question edit modal
   const renderQuestionEditModal = () => (
     <CustomModal
@@ -393,7 +443,19 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
 
   return (
     <Card className='radius overflow-x-scroll'>
-      <Heading level={4} marginBottom="1rem">Quiz Questions</Heading>
+      <Flex direction="row" justifyContent="space-between" alignItems="center" marginBottom="1rem">
+        <Heading level={4}>Quiz Questions</Heading>
+        
+        <Button
+          variation="link"
+          size="small"
+          onClick={handleRefresh}
+          isLoading={isRefreshing}
+          loadingText="Refreshing..."
+        >
+          {isRefreshing ? "Refreshing..." : "↻ Refresh"}
+        </Button>
+      </Flex>
       
       {actionMessage && (
         <Alert 

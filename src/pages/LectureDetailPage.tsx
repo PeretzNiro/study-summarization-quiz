@@ -192,45 +192,7 @@ const LectureDetailPage: React.FC = () => {
         </div>
       </div>
       
-      <div className="lecture-content">
-        {lecture.content && (
-          <div className="content-markdown">
-            <div className="markdown-content">
-              <ReactMarkdown 
-                rehypePlugins={[rehypeRaw, rehypeKatex]}
-                remarkPlugins={[remarkGfm, remarkMath]}
-                components={{
-                  code({node, inline, className, children, ...props}: {
-                    node?: any;
-                    inline?: boolean;
-                    className?: string;
-                    children?: React.ReactNode;
-                    [key: string]: any;
-                  }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        style={vscDarkPlus}
-                        language={match[1]}
-                        PreTag="div"
-                        {...props}
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
-                  }
-                }}
-              >
-                {lecture.content}
-              </ReactMarkdown>
-            </div>
-          </div>
-        )}
-        
+      <div className="lecture-content">    
         {lecture.summary ? (
           <div className="lecture-summary">
             <ReactMarkdown 

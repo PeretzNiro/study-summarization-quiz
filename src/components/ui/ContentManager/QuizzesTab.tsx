@@ -51,45 +51,56 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
   // Action messages
   const [actionMessage, setActionMessage] = useState<ActionMessage | null>(null);
 
+  // Add isRefreshing state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   useEffect(() => {
     setQuizCourseFilter(courseFilter);
   }, [courseFilter]);
 
-  // Fetch quizzes when filters change
-  useEffect(() => {
-    async function fetchQuizzes() {
-      try {
-        setQuizLoading(true);
-        setQuizError(null);
-        
-        let filter: any = {};
-        if (quizCourseFilter) {
-          filter.courseId = { eq: quizCourseFilter };
-        }
-        if (quizLectureFilter) {
-          filter.lectureId = { eq: quizLectureFilter };
-        }
-        
-        const authClient = await getAuthenticatedClient();
-        const { data, errors } = await authClient.models.Quiz.list({
-          filter: Object.keys(filter).length > 0 ? filter : undefined
-        });
-        
-        if (errors) {
-          throw new Error('Failed to fetch quizzes');
-        }
-        
-        setQuizzes(data || []);
-      } catch (error) {
-        console.error('Error fetching quizzes:', error);
-        setQuizError('Failed to load quizzes');
-      } finally {
-        setQuizLoading(false);
+  // Add fetchQuizzes function that can be reused
+  const fetchQuizzes = async () => {
+    try {
+      setQuizLoading(true);
+      setQuizError(null);
+      
+      let filter: any = {};
+      if (quizCourseFilter) {
+        filter.courseId = { eq: quizCourseFilter };
       }
+      if (quizLectureFilter) {
+        filter.lectureId = { eq: quizLectureFilter };
+      }
+      
+      const authClient = await getAuthenticatedClient();
+      const { data, errors } = await authClient.models.Quiz.list({
+        filter: Object.keys(filter).length > 0 ? filter : undefined
+      });
+      
+      if (errors) {
+        throw new Error('Failed to fetch quizzes');
+      }
+      
+      setQuizzes(data || []);
+    } catch (error) {
+      console.error('Error fetching quizzes:', error);
+      setQuizError('Failed to load quizzes');
+    } finally {
+      setQuizLoading(false);
     }
-    
+  };
+
+  // Use this in the useEffect
+  useEffect(() => {
     fetchQuizzes();
   }, [quizCourseFilter, quizLectureFilter, getAuthenticatedClient]);
+
+  // Add handleRefresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchQuizzes();
+    setIsRefreshing(false);
+  };
 
   // Filter quizzes by search term
   const filteredQuizzes = quizzes.filter(quiz => 
@@ -249,7 +260,19 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
 
   return (
     <Card className='radius overflow-x-scroll'>
-      <Heading level={4} marginBottom="1rem">Manage Quizzes</Heading>
+      <Flex direction="row" justifyContent="space-between" alignItems="center" marginBottom="1rem">
+        <Heading level={4}>Manage Quizzes</Heading>
+        
+        <Button
+          variation="link"
+          size="small"
+          onClick={handleRefresh}
+          isLoading={isRefreshing}
+          loadingText="Refreshing..."
+        >
+          {isRefreshing ? "Refreshing..." : "↻ Refresh"}
+        </Button>
+      </Flex>
       
       {actionMessage && (
         <Alert 
