@@ -3,18 +3,16 @@ import { Tabs } from '@aws-amplify/ui-react';
 import LecturesTab from './LecturesTab';
 import QuizQuestionsTab from './QuizQuestionsTab';
 import QuizzesTab from './QuizzesTab';
-import PendingUploadsTab from './PendingUploadsTab'; // Import the new component
+import PendingUploadsTab from './PendingUploadsTab';
 import { generateClient } from 'aws-amplify/api';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import type { Schema } from '../../../../amplify/data/resource';
+import type { Schema } from '../../../amplify/data/resource';  // Fix the path
 import './ContentManager.css';
-
-const client = generateClient<Schema>();
 
 const ContentManager: React.FC = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [lectures, setLectures] = useState<any[]>([]);
-  const [courseFilter, setCourseFilter] = useState<string | null>(null);
+  const [courseFilter, setCourseFilter] = useState<string>('');  // Change from string|null to string
   
   // Get authenticated client
   const getAuthenticatedClient = async () => {

@@ -5,10 +5,7 @@ import {
   View, Divider
 } from '@aws-amplify/ui-react';
 import { CustomModal } from '../../ui/modal/CustomModal';
-import { generateClient } from 'aws-amplify/api';
 import type { Schema } from '../../../amplify/data/resource';
-import { fetchAuthSession } from 'aws-amplify/auth';
-import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 
 interface PendingUploadsTabProps {
   getAuthenticatedClient: () => Promise<any>;
@@ -16,15 +13,29 @@ interface PendingUploadsTabProps {
   refreshLectures: () => void;
 }
 
+interface Lecture {
+  id: string;
+  courseId?: string;
+  lectureId?: string;
+  title?: string;
+  difficulty?: string;
+  fileName?: string;
+  fileType?: string;
+  content?: string;
+  createdAt: string;
+  status?: string;
+  [key: string]: any; // Allow other properties
+}
+
 const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({ 
   getAuthenticatedClient,
   courses,
   refreshLectures
 }) => {
-  const [pendingUploads, setPendingUploads] = useState<any[]>([]);
+  const [pendingUploads, setPendingUploads] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLecture, setSelectedLecture] = useState<any | null>(null);
+  const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actionMessage, setActionMessage] = useState<{type: string, text: string} | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -82,7 +93,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
     }
   };
   
-  const handleReviewClick = (lecture: any) => {
+  const handleReviewClick = (lecture: Lecture) => {
     setSelectedLecture(lecture);
     setEditedValues({
       courseId: lecture.courseId || '',
