@@ -136,10 +136,10 @@ export const handler: Handler = async (event: any) => {
             lectureId: lectureId,
             quizId: `quiz-1`, // Always start with quiz-1 for simplicity
             title: 'Lecture Quiz',
-            description: 'Automatically generated quiz for this lecture',
+            description: 'Main quiz for this lecture',
             questionIds: questionIds, 
             passingScore: 70,
-            difficulty: 'medium',
+            difficulty: 'Medium',
             order: 1,
             isPersonalized: false,
             createdAt: new Date().toISOString(),

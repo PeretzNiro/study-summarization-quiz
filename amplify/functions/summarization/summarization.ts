@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 /**
  * Create an educational summary using Google's Generative AI
@@ -7,7 +7,33 @@ export async function createSummary(text: string, apiKey: string, maxWords: numb
   try {
     // Initialize Google Generative AI
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash",
+      generationConfig: {
+        temperature: 0.2,  // Controls randomness in the model's responses
+        topP: 0.8,      // Controls the probability mass from which tokens are sampled
+        topK: 40,     // Limits the number of possible tokens the model can pick from at each step
+        maxOutputTokens: 8192 // Maximum token length for the output
+      },
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+      ]      
+    });
     
     // Prepare the educational prompt
     const prompt = `As an educational content creator, create a comprehensive lesson summary of the following lecture content. 
@@ -46,7 +72,18 @@ Please structure your response as follows:
 
     // Generate content with Gemini
     const result = await model.generateContent(prompt);
-    return result.response.text();
+    let responseText = result.response.text();
+
+    // Check if the response starts with the learning objectives marker
+    const marker = "# Learning Objectives:";
+    if (!responseText.startsWith(marker)) {
+      const markerIndex = responseText.indexOf(marker);
+      if (markerIndex !== -1) {
+        responseText = responseText.slice(markerIndex);
+      }
+    }
+    
+    return responseText;
   } catch (error) {
     console.error("Error generating summary:", error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

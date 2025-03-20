@@ -428,7 +428,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                             />
                           </Flex>
                           
-                          <Flex gap="0.5rem" marginLeft="1.5rem">
+                          <Flex className='flex-wrap' gap="0.5rem" marginLeft="1.5rem">
                             <Badge variation={
                               question.difficulty?.toLowerCase() === 'easy' ? 'info' :
                               question.difficulty?.toLowerCase() === 'medium' ? 'warning' : 'error'

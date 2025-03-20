@@ -176,8 +176,8 @@ export const handler: Handler = async (event: any): Promise<any> => {
     // Prepare item data, merging with existing if needed
     const existingItem = existingItems.length > 0 ? existingItems[0] : {};
     
-    // Generate UUID once and store for later use
-    const itemId = id || uuidv4();
+    // Use existing ID if found, or provided ID, or generate new ID
+    const itemId = id || (existingItems.length > 0 ? existingItem.id : uuidv4());
 
     const item: LectureItem = {
       id: itemId,

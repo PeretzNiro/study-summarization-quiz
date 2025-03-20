@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 // Update the interface to match expected format
 interface QuizQuestion {
@@ -65,8 +65,9 @@ function processQuestion(question: any): QuizQuestion {
     options: processedOptions,
     answer: processedAnswer,
     explanation: question.explanation || '',
-    difficulty: (question.difficulty || 'medium').toLowerCase(),
-    topicTag: question.topicTag || 'general'
+    difficulty: (question.difficulty || 'Medium').charAt(0).toUpperCase() + 
+    (question.difficulty || 'Medium').slice(1).toLowerCase(),
+    topicTag: question.topicTag || 'General'
   };
 }
 
@@ -84,10 +85,29 @@ export async function generateQuizQuestions(
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.0-flash",
       generationConfig: {
-        temperature: 0.2,
-        topP: 0.8,
-        maxOutputTokens: 8000
-      }
+        temperature: 0.2,  // Controls randomness in the model's responses
+        topP: 0.8,      // Controls the probability mass from which tokens are sampled
+        topK: 40,     // Limits the number of possible tokens the model can pick from at each step
+        maxOutputTokens: 8192 // Maximum token length for the output
+      },
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+        {
+          category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+          threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
+        },
+      ]      
     });
     
     // Determine the difficulty distribution
@@ -117,7 +137,7 @@ Format each question as follows:
 "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],
 "answer": "A. Option 1",
 "explanation": "This is correct because...",
-"difficulty": "easy|medium|hard",
+"difficulty": "Easy|Medium|Hard",
 "topicTag": "relevant topic or concept"
 }
 
