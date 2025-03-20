@@ -5,7 +5,6 @@ import {
   View, Divider
 } from '@aws-amplify/ui-react';
 import { CustomModal } from '../../ui/modal/CustomModal';
-import type { Schema } from '../../../amplify/data/resource';
 
 interface PendingUploadsTabProps {
   getAuthenticatedClient: () => Promise<any>;
@@ -68,7 +67,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
       }
       
       // Filter them client-side for status
-      const pendingItems = result.data?.filter(lecture => 
+      const pendingItems = result.data?.filter((lecture: { status: string; }) => 
         lecture.status === 'pending_review'
       ) || [];
       

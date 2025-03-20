@@ -6,7 +6,7 @@ import QuizzesTab from './QuizzesTab';
 import PendingUploadsTab from './PendingUploadsTab';
 import { generateClient } from 'aws-amplify/api';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import type { Schema } from '../../../amplify/data/resource';  // Fix the path
+import type { Schema } from '../../../types/Schema';
 import './ContentManager.css';
 
 const ContentManager: React.FC = () => {

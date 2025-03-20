@@ -24,6 +24,11 @@ import { ActionMessage } from './types';
 
 interface LecturesTabProps {
   getAuthenticatedClient: () => Promise<any>;
+  courses: any[];
+  lectures: any[];
+  courseFilter: string;
+  setCourseFilter: React.Dispatch<React.SetStateAction<string>>;
+  refreshLectures: () => Promise<void>;
 }
 
 const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => {
