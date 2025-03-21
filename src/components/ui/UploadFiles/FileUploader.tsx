@@ -100,18 +100,25 @@ const FileUpload: React.FC = () => {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0]; // Get just the first file for simplicity
+      const originalFileName = file.name;
+      const sanitizedFileName = sanitizeFileName(originalFileName);
       
       try {
         // Disable the uploader to prevent other uploads
         setIsUploaderDisabled(true);
         
-        // Check if file exists
-        const fileExists = await StorageService.checkFileExists(folderName, file.name);
+        // Check if file exists with the sanitized name
+        const fileExists = await StorageService.checkFileExists(folderName, sanitizedFileName);
         
         if (fileExists) {
-          // Store file info for later use
-          setPendingFileUpload({file, key: `${folderName}/${file.name}`});
-          setDuplicateFileName(file.name);
+          // Store file info for later use with sanitized name
+          const fileToUpload = new File([file], sanitizedFileName, { type: file.type });
+          setPendingFileUpload({
+            file: fileToUpload, 
+            key: `${folderName}/${sanitizedFileName}`,
+            originalName: originalFileName
+          });
+          setDuplicateFileName(sanitizedFileName);
           setShowDuplicateModal(true);
           
           // Reset file input
@@ -143,11 +150,25 @@ const FileUpload: React.FC = () => {
     setUploadStatus('Uploading...');
     
     try {
-      const filePath = `${folderName}/${file.name}`;
+      // Sanitize the file name
+      const originalFileName = file.name;
+      const sanitizedFileName = sanitizeFileName(originalFileName);
+      
+      // Create a new file with the sanitized name if needed
+      let fileToUpload = file;
+      let displayFileName = originalFileName;
+      
+      if (sanitizedFileName !== originalFileName) {
+        // Create a new File object with the sanitized name
+        fileToUpload = new File([file], sanitizedFileName, { type: file.type });
+        displayFileName = `${originalFileName} (uploaded as ${sanitizedFileName})`;
+      }
+      
+      const filePath = `${folderName}/${sanitizedFileName}`;
       
       await uploadData({
         key: filePath,
-        data: file,
+        data: fileToUpload,
         options: {
           accessLevel: 'protected'
         }
@@ -158,12 +179,13 @@ const FileUpload: React.FC = () => {
       setUploadResults(prev => [
         ...prev, 
         {
-          fileName: file.name,
+          fileName: displayFileName,
           status: 'success',
           message: `Successfully uploaded to ${folderName}/`
         }
       ]);
     } catch (error: unknown) {
+      // Error handling remains the same
       console.error('Error uploading file:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
@@ -187,8 +209,11 @@ const FileUpload: React.FC = () => {
     
     if (pendingFileUpload) {
       try {
-        const fileName = pendingFileUpload.file.name;
-        const filePath = `${folderName}/${fileName}`;
+        const sanitizedFileName = pendingFileUpload.file.name;
+        const filePath = `${folderName}/${sanitizedFileName}`;
+        const displayFileName = pendingFileUpload.originalName
+          ? `${pendingFileUpload.originalName} (uploaded as ${sanitizedFileName})`
+          : sanitizedFileName;
         
         setUploadStatus('Replacing file...');
         
@@ -209,7 +234,7 @@ const FileUpload: React.FC = () => {
         setUploadResults(prev => [
           ...prev, 
           {
-            fileName: fileName,
+            fileName: displayFileName,
             status: 'success',
             message: `Successfully replaced in ${folderName}/`
           }
@@ -239,6 +264,15 @@ const FileUpload: React.FC = () => {
     setShowDuplicateModal(false);
     setUploadStatus('Upload canceled for duplicate file.');
     setPendingFileUpload(null);
+  };
+
+  // Add this function to your component
+  const sanitizeFileName = (fileName: string): string => {
+    // Replace spaces with underscores and remove any special characters
+    return fileName
+      .replace(/\s+/g, '_')                 // Replace spaces with underscores
+      .replace(/[^a-zA-Z0-9._-]/g, '')      // Remove special characters except dots, underscores, and hyphens
+      .replace(/_{2,}/g, '_');              // Replace multiple consecutive underscores with a single one
   };
 
   return (
