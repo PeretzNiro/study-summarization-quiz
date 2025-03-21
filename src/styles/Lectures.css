@@ -152,6 +152,61 @@ code[class*="language-"] {
   font-size: 14px;
 }
 
+code:not([class]) {
+  background-color: #E6E6E6;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  color: #D10000;
+}
+
+/* Table styling */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+.table-wrapper table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; /* Ensures tables have a minimum width */
+}
+
+.table-wrapper th {
+  background-color: var(--amplify-colors-background-secondary);
+  color: var(--amplify-colors-font-primary);
+  font-weight: 600;
+  text-align: left;
+  padding: 0.8rem;
+  border-bottom: 2px solid var(--amplify-colors-border-primary);
+}
+
+.table-wrapper td {
+  padding: 0.8rem;
+  border-bottom: 1px solid var(--amplify-colors-border-secondary);
+  vertical-align: top;
+}
+
+.table-wrapper tr:last-child td {
+  border-bottom: none;
+}
+
+.table-wrapper tr:nth-child(even) {
+  background-color: var(--amplify-colors-background-tertiary);
+}
+
+/* Responsive table for mobile devices */
+@media (max-width: 768px) {
+  .table-wrapper {
+    margin: 1rem -1rem;
+    width: calc(100% + 2rem);
+    border-radius: 0;
+  }
+}
+
+
 /* Styles for code highlighting */
 .token.comment,
 .token.prolog,

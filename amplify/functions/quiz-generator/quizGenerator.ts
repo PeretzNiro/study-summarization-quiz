@@ -87,7 +87,7 @@ export async function generateQuizQuestions(
       generationConfig: {
         temperature: 0.2,  // Controls randomness in the model's responses
         topP: 0.8,      // Controls the probability mass from which tokens are sampled
-        topK: 40,     // Limits the number of possible tokens the model can pick from at each step
+        topK: 3,     // Limits the number of possible tokens the model can pick from at each step
         maxOutputTokens: 8192 // Maximum token length for the output
       },
       safetySettings: [
@@ -128,7 +128,7 @@ For each question:
 2. Provide exactly 4 answer choices labeled A, B, C, and D. Each option should start with "A. ", "B. ", "C. ", or "D. " followed by the answer text.
 3. Indicate the correct answer as "A. [text]", "B. [text]", etc.
 4. Provide a brief explanation of why the answer is correct.
-5. Assign a difficulty level (easy, medium, hard).
+5. Assign a difficulty level (Easy, Medium, Hard).
 6. Assign a topic tag that categorizes what concept this question is testing.
 
 Format each question as follows:

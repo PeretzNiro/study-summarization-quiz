@@ -202,6 +202,13 @@ const LectureDetailPage: React.FC = () => {
                 h1: ({node, children, ...props}) => <h2 className="summary-heading" {...props}>{children}</h2>,
                 h2: ({node, children, ...props}) => <h3 className="summary-heading" {...props}>{children}</h3>,
                 h3: ({node, children, ...props}) => <h4 className="summary-heading" {...props}>{children}</h4>,
+                // Add table wrapper component
+                table: ({node, children, ...props}) => (
+                  <div className="table-wrapper">
+                    <table {...props}>{children}</table>
+                  </div>
+                ),
+                // Keep your existing code component
                 code({node, inline, className, children, ...props}: {
                   node?: any;
                   inline?: boolean;
