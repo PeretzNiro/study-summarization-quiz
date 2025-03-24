@@ -64,6 +64,11 @@ const backend = defineBackend({
   backend.data.resources.tables.Quiz.tableName
 );
 
+(backend.quizGenerator.resources.lambda as any).addEnvironment(
+  'LECTURE_TABLE_NAME',
+  backend.data.resources.tables.Lecture.tableName
+);
+
 // Then set up all permissions
 // Grant bucket permissions
 backend.lectures.resources.bucket.grantRead(backend.fileProcessor.resources.lambda);
