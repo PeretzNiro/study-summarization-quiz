@@ -11,7 +11,7 @@ export const handler: Handler = async (event: any) => {
   
   try {
     // Extract parameters from event
-    let content, courseId, lectureId, itemId, summary;
+    let content, courseId, lectureId, itemId, summary, title;
     
     if (event.Records && event.Records.length > 0 && event.Records[0].body) {
       // From SQS
@@ -21,6 +21,7 @@ export const handler: Handler = async (event: any) => {
       lectureId = body.lectureId;
       itemId = body.id;
       summary = body.summary;
+      title = body.title;  // Extract title from SQS event
     } else if (event.body) {
       // From API Gateway
       const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
@@ -29,6 +30,7 @@ export const handler: Handler = async (event: any) => {
       lectureId = body.lectureId;
       itemId = body.id;
       summary = body.summary;
+      title = body.title;  // Extract title from API Gateway event
     } else {
       // Direct invocation
       content = event.content;
@@ -36,6 +38,7 @@ export const handler: Handler = async (event: any) => {
       lectureId = event.lectureId;
       itemId = event.id;
       summary = event.summary;
+      title = event.title;  // Extract title from direct invocation
     }
     
     if (!content && !summary) {
@@ -135,7 +138,7 @@ export const handler: Handler = async (event: any) => {
             courseId: courseId,
             lectureId: lectureId,
             quizId: `quiz-1`, // Always start with quiz-1 for simplicity
-            title: 'Lecture Quiz',
+            title: title ? `${title} Quiz` : 'Lecture Quiz', // Use lecture title if available
             description: 'Main quiz for this lecture',
             questionIds: questionIds, 
             passingScore: 70,
