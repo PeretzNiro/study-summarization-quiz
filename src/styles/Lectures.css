@@ -159,6 +159,13 @@ code:not([class]) {
   color: #D10000;
 }
 
+pre code:not([class]) {
+  background-color: unset;
+  padding: 0;
+  border-radius: 0.25rem;
+  color: unset;
+}
+
 /* Table styling */
 .table-wrapper {
   width: 100%;

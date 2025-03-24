@@ -77,7 +77,7 @@ function processQuestion(question: any): QuizQuestion {
 export async function generateQuizQuestions(
   text: string, 
   apiKey: string, 
-  questionCount: number = 10
+  questionCount: number = 10 // Ideal Range: 5-20 questions (for optimal quality and performance)
 ): Promise<QuizQuestion[] | string> {
   try {
     // Initialize Google Generative AI

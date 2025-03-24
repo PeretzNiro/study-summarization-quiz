@@ -172,11 +172,11 @@ a {
   transition: opacity 0.2s ease-in-out;
 }
 
-
-pre {
-  overflow-x: auto;
+@media screen and (max-width: 600px) {
+  pre {
+    overflow-x: scroll;
+  }
 }
-  
 
 
 @media screen and (max-width: 1001px) {
