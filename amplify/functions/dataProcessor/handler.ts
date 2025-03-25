@@ -53,23 +53,14 @@ export const handler: Handler = async (event: any): Promise<any> => {
           if (oldImage.status !== 'approved' && newImage.status === 'approved') {
             console.log(`Status changed to approved for lecture ${newImage.id}`);
             
-            // Invoke summarization
-            const summarizationFunction = process.env.SUMMARIZATION_FUNCTION_NAME;
-            
-            if (summarizationFunction) {
-              await lambda.invoke({
-                FunctionName: summarizationFunction,
-                InvocationType: 'Event',
-                Payload: JSON.stringify({
-                  id: newImage.id,
-                  courseId: newImage.courseId,
-                  lectureId: newImage.lectureId,
-                  content: newImage.content
-                })
-              }).promise();
-              
-              console.log('Summarization invoked successfully');
-            }
+            // Include title in the payload
+            await invokeSummarization({
+              id: newImage.id,
+              courseId: newImage.courseId,
+              lectureId: newImage.lectureId,
+              content: newImage.content,
+              title: newImage.title || '' 
+            });
           }
         }
       }
@@ -111,25 +102,13 @@ export const handler: Handler = async (event: any): Promise<any> => {
           console.log('Status changed to approved, triggering summarization');
           
           // Invoke summarization Lambda
-          const summarizationFunction = process.env.SUMMARIZATION_FUNCTION_NAME;
-          
-          if (summarizationFunction) {
-            console.log(`Invoking summarization function: ${summarizationFunction}`);
-            const payload = {
-              id: event.id,
-              courseId: getResult.Item.courseId,
-              lectureId: getResult.Item.lectureId,
-              content: getResult.Item.content
-            };
-            
-            await lambda.invoke({
-              FunctionName: summarizationFunction,
-              InvocationType: 'Event',  // Asynchronous invocation
-              Payload: JSON.stringify(payload)
-            }).promise();
-          } else {
-            console.log('SUMMARIZATION_FUNCTION_NAME not configured');
-          }
+          await invokeSummarization({
+            id: event.id,
+            courseId: getResult.Item.courseId,
+            lectureId: getResult.Item.lectureId,
+            content: getResult.Item.content,
+            title: getResult.Item.title
+          });
         } else {
           console.log('No status change to approved or already approved');
         }
@@ -210,28 +189,13 @@ export const handler: Handler = async (event: any): Promise<any> => {
       
       // Only invoke summarization if the item is approved
       if (item.status === 'approved') {
-        // Invoke summarization Lambda
-        const summarizationFunction = process.env.SUMMARIZATION_FUNCTION_NAME;
-        
-        if (summarizationFunction) {
-          console.log(`Invoking summarization function: ${summarizationFunction}`);
-          const payload = {
-            id: item.id,
-            courseId: item.courseId,
-            lectureId: item.lectureId,
-            content: item.content
-          };
-          
-          const response = await lambda.invoke({
-            FunctionName: summarizationFunction,
-            InvocationType: 'Event',  // Asynchronous invocation
-            Payload: JSON.stringify(payload)
-          }).promise();
-          
-          console.log(`Lambda invoke response:`, response);
-        } else {
-          console.log('SUMMARIZATION_FUNCTION_NAME not configured');
-        }
+        await invokeSummarization({
+          id: item.id,
+          courseId: item.courseId,
+          lectureId: item.lectureId,
+          content: item.content,
+          title: item.title || '' 
+        });
       } else {
         console.log('Item is in pending_review state - not invoking summarization');
       }
@@ -260,3 +224,34 @@ export const handler: Handler = async (event: any): Promise<any> => {
     };
   }
 };
+
+async function invokeSummarization(params: {
+  id: string;
+  courseId: string;
+  lectureId: string;
+  content: string;
+  title: string;
+}) {
+  const summarizationFunction = process.env.SUMMARIZATION_FUNCTION_NAME;
+  
+  if (!summarizationFunction) {
+    console.log('SUMMARIZATION_FUNCTION_NAME not configured');
+    return;
+  }
+  
+  console.log(`Invoking summarization function: ${summarizationFunction}`);
+  
+  try {
+    const response = await lambda.invoke({
+      FunctionName: summarizationFunction,
+      InvocationType: 'Event',
+      Payload: JSON.stringify(params)
+    }).promise();
+    
+    console.log('Summarization invoked successfully:', response);
+    return response;
+  } catch (error) {
+    console.error('Error invoking summarization:', error);
+    throw error;
+  }
+}
