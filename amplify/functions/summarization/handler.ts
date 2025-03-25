@@ -19,6 +19,7 @@ export const handler: Handler = async (event: any): Promise<any> => {
       courseId = body.courseId;
       lectureId = body.lectureId;
       itemId = body.id;
+      title = body.title;
     } else if (event.body) {
       // From API Gateway
       const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
@@ -26,12 +27,14 @@ export const handler: Handler = async (event: any): Promise<any> => {
       courseId = body.courseId;
       lectureId = body.lectureId;
       itemId = body.id;
+      title = body.title;
     } else {
       // Direct invocation
       content = event.content;
       courseId = event.courseId;
       lectureId = event.lectureId;
       itemId = event.id;
+      title = event.title;
     }
     
     if (!content) {
@@ -138,7 +141,8 @@ export const handler: Handler = async (event: any): Promise<any> => {
             courseId,
             lectureId,
             content,
-            summary
+            summary,
+            title
           };
           
           const quizResponse = await lambda.invoke({
@@ -164,7 +168,8 @@ export const handler: Handler = async (event: any): Promise<any> => {
         summary,
         courseId,
         lectureId,
-        id: itemId
+        id: itemId,
+        title
       })
     };
     
