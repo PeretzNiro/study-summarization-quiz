@@ -23,19 +23,6 @@ interface LectureItem {
   status?: string;
 }
 
-interface ProcessorInput {
-  id?: string;
-  courseId: string;
-  lectureId: string;
-  title: string;
-  content: string;
-  fileName?: string;
-  fileType?: string;
-  difficulty?: string;
-  status?: string;
-  statusUpdate?: boolean;
-}
-
 // This is triggered by DynamoDB Stream when status changes to approved
 export const handler: Handler = async (event: any): Promise<any> => {
   try {
@@ -189,13 +176,17 @@ export const handler: Handler = async (event: any): Promise<any> => {
       
       // Only invoke summarization if the item is approved
       if (item.status === 'approved') {
-        await invokeSummarization({
-          id: item.id,
-          courseId: item.courseId,
-          lectureId: item.lectureId,
-          content: item.content,
-          title: item.title || '' 
-        });
+        if (item.id) { // Make sure id is defined
+          await invokeSummarization({
+            id: item.id,
+            courseId: item.courseId,
+            lectureId: item.lectureId,
+            content: item.content,
+            title: item.title || '' 
+          });
+        } else {
+          console.error('Cannot invoke summarization: item.id is undefined');
+        }
       } else {
         console.log('Item is in pending_review state - not invoking summarization');
       }
