@@ -10,7 +10,7 @@ export const handler: Handler = async (event: any): Promise<any> => {
   
   try {
     // Extract parameters from event
-    let content, courseId, lectureId, itemId;
+    let content, courseId, lectureId, itemId, title;
     
     if (event.Records && event.Records.length > 0 && event.Records[0].body) {
       // From SQS
