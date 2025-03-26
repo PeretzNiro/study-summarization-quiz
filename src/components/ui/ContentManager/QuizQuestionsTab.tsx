@@ -24,12 +24,16 @@ import { CustomModal } from '../../ui/modal/CustomModal';
 import { ActionMessage } from './types';
 
 interface QuizQuestionsTabProps {
-  getAuthenticatedClient: () => Promise<any>;
-  courses: any[];
-  lectures: any[];
-  courseFilter: string;
+  getAuthenticatedClient: () => Promise<any>;  // Function to get authenticated API client
+  courses: any[];                              // Available courses data
+  lectures: any[];                             // Available lectures data
+  courseFilter: string;                        // Initial course filter value
 }
 
+/**
+ * Quiz questions management tab for approving and editing quiz content
+ * Provides filtering, searching, and detailed editing capabilities
+ */
 const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({ 
   getAuthenticatedClient,
   courses,
@@ -51,26 +55,30 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
   const [editingQuestion, setEditingQuestion] = useState<any | null>(null);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
 
-  // Add a new state for tracking questions being approved
+  // Track questions currently being approved with loading indicators
   const [approvingQuestions, setApprovingQuestions] = useState<Record<string, boolean>>({});
 
-  // Add state for success/error/info messages
+  // User feedback messages
   const [actionMessage, setActionMessage] = useState<ActionMessage | null>(null);
 
-  // Add isRefreshing state
+  // Data refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Sync with parent component's course filter
   useEffect(() => {
     setQuestionCourseFilter(courseFilter);
   }, [courseFilter]);
 
-  // Fetch quiz questions when filters change
+  /**
+   * Fetch quiz questions from the database with optional filtering
+   */
   useEffect(() => {
     async function fetchQuizQuestions() {
       try {
         setQuestionsLoading(true);
         setQuestionsError(null);
         
+        // Build filter based on selected course and lecture
         let filter: any = {};
         if (questionCourseFilter) {
           filter.courseId = { eq: questionCourseFilter };
@@ -85,7 +93,6 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         });
         
         if (errors) {
-          console.error('GraphQL errors:', errors);
           throw new Error(errors[0].message);
         }
         
@@ -98,7 +105,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
       }
     }
     
-    // Update filtered lectures for question tab
+    // Update filtered lectures when course filter changes
     if (questionCourseFilter) {
       const filtered = lectures.filter(lecture => 
         lecture.courseId === questionCourseFilter
@@ -111,63 +118,61 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
     fetchQuizQuestions();
   }, [questionCourseFilter, questionLectureFilter, lectures, getAuthenticatedClient]);
 
-  // Filter quiz questions by search term
+  // Filter quiz questions by search term and sort by approval status and date
   const filteredQuestions = quizQuestions
     .filter(question => 
       question.question?.toLowerCase().includes(questionSearch.toLowerCase()) ||
       question.topicTag?.toLowerCase().includes(questionSearch.toLowerCase())
     )
-    // Add sorting to show pending questions first
     .sort((a, b) => {
-      // First sort by approval status (pending first)
+      // Show pending questions first
       if (a.isApproved && !b.isApproved) return 1;
       if (!a.isApproved && b.isApproved) return -1;
       
-      // Then sort by creation date (newest first) within each group
+      // Then sort by creation date (newest first)
       const aDate = new Date(a.createdAt || 0);
       const bDate = new Date(b.createdAt || 0);
       return bDate.getTime() - aDate.getTime();
     });
 
-  // Paginate quiz questions
+  // Paginate filtered questions
   const paginatedQuestions = filteredQuestions.slice(
     (questionPage - 1) * questionsPerPage,
     questionPage * questionsPerPage
   );
 
-  // Update the approveQuestion function
+  /**
+   * Mark a question as approved in the database
+   * @param questionId ID of the question to approve
+   */
   const approveQuestion = async (questionId: string) => {
     try {
-      // Set loading state for this specific question
+      // Track loading state for this specific question
       setApprovingQuestions(prev => ({ ...prev, [questionId]: true }));
       
       const authClient = await getAuthenticatedClient();
       await authClient.models.QuizQuestion.update({
         id: questionId,
-        reviewStatus: 'Approved', // Capitalize for storage
+        reviewStatus: 'Approved',
         isApproved: true
       });
       
-      // Update local state
+      // Update local state with approved question
       setQuizQuestions(quizQuestions.map(question => 
         question.id === questionId 
           ? { ...question, reviewStatus: 'Approved', isApproved: true }
           : question
       ));
       
-      // Show success message
+      // Show temporary success message
       setActionMessage({ text: 'Question approved successfully', type: 'success' });
-      
-      // Auto-hide message after 3 seconds
       setTimeout(() => setActionMessage(null), 3000);
     } catch (error) {
       console.error('Error approving question:', error);
       setActionMessage({ text: 'Failed to approve question', type: 'error' });
-      
-      // Auto-hide message after 3 seconds
       setTimeout(() => setActionMessage(null), 3000);
     } finally {
-      // Clear loading state
+      // Clear loading state for this question
       setApprovingQuestions(prev => {
         const newState = { ...prev };
         delete newState[questionId];
@@ -176,19 +181,22 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
     }
   };
 
-  // Add this function to handle question updates
+  /**
+   * Save changes to a question in the database
+   * @param event Form submission event
+   */
   const handleQuestionUpdate = async (event: React.FormEvent) => {
     event.preventDefault();
     
     try {
-      // Convert difficulty to proper case for storage
+      // Normalize difficulty value for consistency
       const formattedDifficulty = editingQuestion.difficulty?.toLowerCase() === 'easy' ? 'Easy' :
                                 editingQuestion.difficulty?.toLowerCase() === 'medium' ? 'Medium' :
                                 editingQuestion.difficulty?.toLowerCase() === 'hard' ? 'Hard' :
                                 'Medium'; // Default
       
       const authClient = await getAuthenticatedClient();
-      const result = await authClient.models.QuizQuestion.update({
+      await authClient.models.QuizQuestion.update({
         id: editingQuestion.id,
         courseId: editingQuestion.courseId,
         lectureId: editingQuestion.lectureId,
@@ -196,15 +204,13 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         options: editingQuestion.options,
         answer: editingQuestion.answer,
         explanation: editingQuestion.explanation || '',
-        difficulty: formattedDifficulty, // Use the formatted version
+        difficulty: formattedDifficulty,
         topicTag: editingQuestion.topicTag || '',
         reviewStatus: editingQuestion.reviewStatus || 'pending',
         isApproved: editingQuestion.isApproved || false
       });
       
-      console.log("Update result:", result);
-      
-      // Update local state with the properly formatted difficulty
+      // Update local state with edited question
       const updatedQuestion = {
         ...editingQuestion,
         difficulty: formattedDifficulty
@@ -214,7 +220,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         question.id === editingQuestion.id ? updatedQuestion : question
       ));
       
-      // Close modal and reset
+      // Close modal and reset form
       setIsQuestionModalOpen(false);
       setEditingQuestion(null);
       
@@ -228,22 +234,31 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
     }
   };
 
+  /**
+   * Add a new empty option to the question being edited
+   */
   const addOption = () => {
     if (!editingQuestion) return;
     const options = [...editingQuestion.options || [], ''];
     setEditingQuestion({...editingQuestion, options});
   };
   
+  /**
+   * Remove an option from the question being edited
+   * Also updates the answer if the removed option was the correct answer
+   */
   const removeOption = (index: number) => {
     if (!editingQuestion) return;
     const options = [...editingQuestion.options];
-    options.splice(index, 1);
     
-    // If removed option was the answer, reset answer
+    // Check if removing the correct answer
     let answer = editingQuestion.answer;
     if (answer === editingQuestion.options[index]) {
       answer = '';
     }
+    
+    // Remove the option
+    options.splice(index, 1);
     
     setEditingQuestion({
       ...editingQuestion, 
@@ -252,16 +267,22 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
     });
   };
   
+  /**
+   * Update an option's text in the question being edited
+   * Also updates the answer if this option was the correct answer
+   */
   const updateOption = (index: number, value: string) => {
     if (!editingQuestion) return;
     const options = [...editingQuestion.options];
-    options[index] = value;
     
-    // Update answer if it was the same as the old option
+    // Check if updating the correct answer
     let answer = editingQuestion.answer;
     if (answer === editingQuestion.options[index]) {
       answer = value;
     }
+    
+    // Update the option
+    options[index] = value;
     
     setEditingQuestion({
       ...editingQuestion, 
@@ -270,13 +291,16 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
     });
   };
 
-  // Add handleRefresh function
+  /**
+   * Refresh the questions list from the database
+   */
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       setQuestionsLoading(true);
       setQuestionsError(null);
       
+      // Apply same filters as before
       let filter: any = {};
       if (questionCourseFilter) {
         filter.courseId = { eq: questionCourseFilter };
@@ -291,7 +315,6 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
       });
       
       if (errors) {
-        console.error('GraphQL errors:', errors);
         throw new Error(errors[0].message);
       }
       
@@ -305,7 +328,9 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
     }
   };
 
-  // Render question edit modal
+  /**
+   * Renders the question edit modal with form fields
+   */
   const renderQuestionEditModal = () => (
     <CustomModal
       isOpen={isQuestionModalOpen}
@@ -319,6 +344,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         
         {editingQuestion && (
           <form onSubmit={handleQuestionUpdate}>
+            {/* Question text */}
             <TextAreaField
               label="Question"
               name="question"
@@ -329,6 +355,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
               marginBottom="1rem"
             />
             
+            {/* Answer options section */}
             <Heading level={5} marginTop="1rem" marginBottom="0.5rem">Options</Heading>
             {editingQuestion.options?.map((option: string, index: number) => (
               <Flex key={index} alignItems="center" marginBottom="0.5rem">
@@ -342,6 +369,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
                   flex="1"
                 />
                 
+                {/* Correct answer selection */}
                 <CheckboxField
                   label="Correct Answer"
                   name={`correct-${index}`}
@@ -351,6 +379,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
                   marginLeft="0.5rem"
                 />
                 
+                {/* Option removal button */}
                 <Button
                   variation="destructive"
                   size="small"
@@ -363,6 +392,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
               </Flex>
             ))}
             
+            {/* Add option button - limited to 6 options */}
             {editingQuestion.options?.length < 6 && (
               <Button
                 onClick={addOption}
@@ -373,6 +403,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
               </Button>
             )}
             
+            {/* Explanation field */}
             <TextAreaField
               label="Explanation"
               name="explanation"
@@ -382,6 +413,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
               marginBottom="1rem"
             />
             
+            {/* Metadata fields */}
             <Flex gap="1rem">
               <SelectField
                 label="Difficulty"
@@ -406,6 +438,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
               />
             </Flex>
             
+            {/* Action buttons */}
             <Flex justifyContent="space-between">
               <Button 
                 variation="link" 
@@ -417,6 +450,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
                 Cancel
               </Button>
               <Flex gap="1rem">
+                {/* Combined approve and save button for pending questions */}
                 {!editingQuestion.isApproved && (
                   <Button 
                     variation="warning"
@@ -446,6 +480,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
       <Flex direction="row" justifyContent="space-between" alignItems="center" marginBottom="1rem">
         <Heading level={4}>Quiz Questions</Heading>
         
+        {/* Refresh button */}
         <Button
           variation="link"
           size="small"
@@ -457,6 +492,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         </Button>
       </Flex>
       
+      {/* Status and error messages */}
       {actionMessage && (
         <Alert 
           className='radius-s'
@@ -469,8 +505,10 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         </Alert>
       )}
       
+      {/* Filter controls */}
       <Flex justifyContent="space-between" marginBottom="1rem">
         <Flex direction="row" gap="1rem">
+          {/* Course filter */}
           <SelectField
             label="Filter by Course"
             labelHidden
@@ -485,6 +523,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
             ))}
           </SelectField>
           
+          {/* Lecture filter - only enabled when course is selected */}
           <SelectField
             label="Filter by Lecture"
             labelHidden
@@ -501,6 +540,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
           </SelectField>
         </Flex>
         
+        {/* Search field */}
         <SearchField
           label="Search questions"
           placeholder="Search by question or topic"
@@ -512,6 +552,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         />
       </Flex>
 
+      {/* Loading and empty states */}
       {questionsLoading ? (
         <Flex justifyContent="center" padding="2rem">
           <Loader size="large" />
@@ -522,6 +563,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         <Alert className='radius-s' variation="info">No quiz questions found</Alert>
       ) : (
         <>
+          {/* Questions table */}
           <Table highlightOnHover>
             <TableHead>
               <TableRow>
@@ -534,7 +576,10 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
             </TableHead>
             <TableBody>{paginatedQuestions.map(question => (
               <TableRow key={question.id}>
+                {/* Truncated question text */}
                 <TableCell>{question.question?.substring(0, 60)}...</TableCell>
+                
+                {/* Difficulty with color coding */}
                 <TableCell>
                   <Badge
                     variation={
@@ -545,15 +590,21 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
                     {question.difficulty}
                   </Badge>
                 </TableCell>
+                
                 <TableCell>{question.topicTag || 'General'}</TableCell>
+                
+                {/* Approval status badge */}
                 <TableCell>
                   {question.isApproved ? 
                     <Badge variation="success">Approved</Badge> : 
                     <Badge variation="warning">Pending</Badge>
                   }
                 </TableCell>
+                
+                {/* Action buttons */}
                 <TableCell>
                   <Flex gap="0.5rem">
+                    {/* Approve button - only shown for pending questions */}
                     {!question.isApproved && (
                       <Button 
                         variation="primary" 
@@ -565,6 +616,8 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
                         Approve
                       </Button>
                     )}
+                    
+                    {/* Edit button */}
                     <Button
                       variation="warning"
                       size="small"
@@ -575,6 +628,8 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
                     >
                       Edit
                     </Button>
+                    
+                    {/* Expandable details section */}
                     <Accordion>
                       <Accordion.Container>
                         <Accordion.Item value="details">
@@ -612,6 +667,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
             ))}</TableBody>
           </Table>
           
+          {/* Pagination controls */}
           <Pagination
             currentPage={questionPage}
             totalPages={Math.ceil(filteredQuestions.length / questionsPerPage)}
@@ -622,7 +678,7 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
         </>
       )}
 
-      {/* Add the modal here */}
+      {/* Question edit modal */}
       {renderQuestionEditModal()}
     </Card>
   );

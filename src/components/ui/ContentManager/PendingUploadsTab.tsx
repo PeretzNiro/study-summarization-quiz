@@ -7,9 +7,9 @@ import {
 import { CustomModal } from '../../ui/modal/CustomModal';
 
 interface PendingUploadsTabProps {
-  getAuthenticatedClient: () => Promise<any>;
-  courses: any[];
-  refreshLectures: () => void;
+  getAuthenticatedClient: () => Promise<any>;  // Function to get authenticated API client
+  courses: any[];                              // Available courses data
+  refreshLectures: () => void;                 // Callback to refresh lectures in parent component
 }
 
 interface Lecture {
@@ -26,11 +26,16 @@ interface Lecture {
   [key: string]: any; // Allow other properties
 }
 
+/**
+ * Component for reviewing and approving uploaded lecture documents
+ * Allows admins to set metadata and trigger the content processing pipeline
+ */
 const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({ 
   getAuthenticatedClient,
   courses,
   refreshLectures
 }) => {
+  // State for lecture data
   const [pendingUploads, setPendingUploads] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +44,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
   const [actionMessage, setActionMessage] = useState<{type: string, text: string} | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Form state
+  // Form state for editing lecture metadata
   const [editedValues, setEditedValues] = useState({
     courseId: '',
     lectureId: '',
@@ -52,6 +57,9 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
     fetchPendingUploads();
   }, []);
   
+  /**
+   * Fetch lectures with pending_review status from the database
+   */
   const fetchPendingUploads = async () => {
     try {
       setLoading(true);
@@ -71,18 +79,6 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
         lecture.status === 'pending_review'
       ) || [];
       
-      console.log(`Found ${pendingItems.length} pending lectures out of ${result.data?.length || 0} total`);
-      
-      // Log the first few to see what they look like
-      if (pendingItems.length > 0) {
-        console.log('First pending item:', pendingItems[0]);
-      } else {
-        // Log a few regular lectures to see if status is present
-        if (result.data && result.data.length > 0) {
-          console.log('Sample lecture:', result.data[0]);
-        }
-      }
-      
       setPendingUploads(pendingItems);
     } catch (error: any) {
       console.error('Error fetching pending uploads:', error);
@@ -92,6 +88,9 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
     }
   };
   
+  /**
+   * Handle click on review button and populate the edit form
+   */
   const handleReviewClick = (lecture: Lecture) => {
     setSelectedLecture(lecture);
     setEditedValues({
@@ -103,11 +102,13 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
     setIsModalOpen(true);
   };
   
-  // Update the handleInputChange function to handle both dropdown and text input
+  /**
+   * Handle changes to form input fields
+   */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // If changing courseId through the text field, update both courseId
+    // If changing courseId through the text field, update courseId
     if (name === 'courseId') {
       setEditedValues({
         ...editedValues,
@@ -122,6 +123,10 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
     }
   };
   
+  /**
+   * Approve lecture and start processing pipeline
+   * Updates status to 'approved' which triggers backend processing
+   */
   const handleApprove = async () => {
     if (!selectedLecture) return;
     
@@ -167,6 +172,9 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
     }
   };
   
+  /**
+   * Reject and remove uploaded document from the database
+   */
   const handleReject = async () => {
     if (!selectedLecture) return;
     
@@ -206,6 +214,9 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
     }
   };
   
+  /**
+   * Manually refresh the list of pending uploads
+   */
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchPendingUploads();
@@ -228,6 +239,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
         </Button>
       </Flex>
       
+      {/* Status message display */}
       {actionMessage && (
         <Alert 
           variation={actionMessage.type as any} 
@@ -239,6 +251,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
         </Alert>
       )}
       
+      {/* Content loading states */}
       {loading && !selectedLecture ? (
         <Flex justifyContent="center" padding="2rem">
           <Loader size="large" />
@@ -286,7 +299,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
         </Table>
       )}
       
-      {/* Review Modal */}
+      {/* Document review modal */}
       <CustomModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -297,6 +310,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
           {selectedLecture && (
             <View>
               <Flex direction="column" gap="1rem">
+                {/* File information section */}
                 <Text fontWeight="bold">File Details</Text>
                 <Flex className="flex-wrap" direction="row" gap="1rem">
                   <Text><strong>File Name:</strong> {selectedLecture.fileName}</Text>
@@ -306,11 +320,13 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
                 
                 <Divider />
                 
+                {/* Metadata editing section */}
                 <Heading level={5}>Edit Metadata</Heading>
                 <Text>
                   Please review and correct the course/lecture information below.
                 </Text>
                 
+                {/* Course selection with dropdown and manual entry */}
                 <View>
                   <Text as="label" fontWeight="bold">Course ID</Text>
                   <Flex direction="column" gap="0.5rem">
@@ -354,6 +370,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
                   </Flex>
                 </View>
                 
+                {/* Lecture metadata fields */}
                 <TextField
                   label="Lecture ID"
                   name="lectureId"
@@ -383,6 +400,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
                 
                 <Divider />
                 
+                {/* Content preview with scrollable container */}
                 <Heading level={5}>Content Preview</Heading>
                 <View 
                   style={{ 
@@ -402,6 +420,7 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
                   </pre>
                 </View>
                 
+                {/* Action buttons */}
                 <Flex justifyContent="space-between" width="100%" marginTop="1rem">
                   <Button
                     variation="destructive"

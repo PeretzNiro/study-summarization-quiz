@@ -11,11 +11,9 @@ import { parsePdfSafely } from './pdf-parser-safe';
 /**
  * Extracts text content from PDF files using pdf-parse
  * @param pdfBuffer - Buffer containing PDF data
+ * @returns Structured data object with extracted content and metadata
  */
 export async function extractPdfContent(pdfBuffer: Buffer): Promise<ExtractedData> {
-  console.log('Extracting content from PDF...');
-  const startTime = Date.now();
-
   try {
     // Parse PDF directly using our safe wrapper
     const data = await parsePdfSafely(pdfBuffer, {
@@ -43,10 +41,6 @@ export async function extractPdfContent(pdfBuffer: Buffer): Promise<ExtractedDat
     const lectureId = extractLectureId(processedText);
     const difficulty = determineDifficulty(processedText);
     
-    const endTime = Date.now();
-    console.log(`PDF extraction completed in ${(endTime - startTime) / 1000} seconds`);
-    console.log(`Extracted ${processedText.length} characters`);
-    
     return {
       courseId,
       lectureId,
@@ -67,14 +61,12 @@ export async function extractPdfContent(pdfBuffer: Buffer): Promise<ExtractedDat
 }
 
 /**
- * Extracts text and tables from PDF using pdf-parse with additional table processing
- * For more comprehensive table extraction
+ * Extracts text and tables from PDF using pdf-parse with advanced table detection
+ * Provides richer content extraction with formatted tables for educational materials
  * @param pdfBuffer - Buffer containing PDF data
+ * @returns Structured data with table-aware content and metadata
  */
 export async function extractPdfWithTables(pdfBuffer: Buffer): Promise<ExtractedData> {
-  console.log('Extracting PDF with tables...');
-  const startTime = Date.now();
-  
   try {
     // Parse PDF directly using pdf-parse library
     const data = await parsePdfSafely(pdfBuffer, {
@@ -92,12 +84,11 @@ export async function extractPdfWithTables(pdfBuffer: Buffer): Promise<Extracted
       }
     }
     
-    console.log('Detecting and formatting tables...');
-    
-    // First pass - scientific table detection
+    // Two-pass table detection for better accuracy
+    // First pass - scientific table detection (equations, data tables)
     let textWithTables = extractScientificPdfTables(fullText);
     
-    // Second pass - general table detection
+    // Second pass - general table detection (text tables, columns)
     textWithTables = detectTablesInPdfText(textWithTables);
     
     // Apply post-processing to clean up the content
@@ -107,9 +98,6 @@ export async function extractPdfWithTables(pdfBuffer: Buffer): Promise<Extracted
     const courseId = extractCourseId(processedText);
     const lectureId = extractLectureId(processedText);
     const difficulty = determineDifficulty(processedText);
-    
-    console.log(`PDF table extraction completed in ${(Date.now() - startTime) / 1000} seconds`);
-    console.log(`Difficulty assessment: ${difficulty}`);
     
     return {
       courseId,

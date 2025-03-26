@@ -1,59 +1,86 @@
-# Contributing Guidelines
+# Contributing to AI-Powered Study Content Generator
 
-Thank you for your interest in contributing to our project. Whether it's a bug report, new feature, correction, or additional
-documentation, we greatly value feedback and contributions from our community.
+Thank you for considering contributing to our AI-powered educational content platform! This document provides guidelines and information to help you contribute effectively.
 
-Please read through this document before submitting any issues or pull requests to ensure we have all the necessary
-information to effectively respond to your bug report or contribution.
+## Ways to Contribute
 
+There are many ways to contribute to this project:
 
-## Reporting Bugs/Feature Requests
+- Reporting bugs and issues
+- Suggesting new features or enhancements
+- Improving documentation
+- Submitting code changes or fixes
+- Writing tests
+- Providing feedback on existing features
 
-We welcome you to use the GitHub issue tracker to report bugs or suggest features.
+## Development Process
 
-When filing an issue, please check existing open, or recently closed, issues to make sure somebody else hasn't already
-reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
+### Setting Up the Development Environment
 
-* A reproducible test case or series of steps
-* The version of our code being used
-* Any modifications you've made relevant to the bug
-* Anything unusual about your environment or deployment
+1. Fork the repository
+2. Clone your fork to your local machine
+3. Install dependencies with `npm install`
+4. Setup AWS Amplify CLI and initialize your local environment
+5. Configure your Google Gemini API key in AWS Secrets Manager
 
+### Development Workflow
 
-## Contributing via Pull Requests
-Contributions via pull requests are much appreciated. Before sending us a pull request, please ensure that:
+1. Create a new branch for your changes: `git checkout -b feature/your-feature-name`
+2. Make your changes and test thoroughly
+3. Commit your changes with clear, descriptive commit messages
+4. Push your branch to your fork
+5. Submit a pull request to the main repository
 
-1. You are working against the latest source on the *main* branch.
-2. You check existing open, and recently merged, pull requests to make sure someone else hasn't addressed the problem already.
-3. You open an issue to discuss any significant work - we would hate for your time to be wasted.
+### Pull Request Guidelines
 
-To send us a pull request, please:
+When submitting a pull request:
 
-1. Fork the repository.
-2. Modify the source; please focus on the specific change you are contributing. If you also reformat all the code, it will be hard for us to focus on your change.
-3. Ensure local tests pass.
-4. Commit to your fork using clear commit messages.
-5. Send us a pull request, answering any default questions in the pull request interface.
-6. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
+1. Provide a clear description of the changes
+2. Link any related issues (use "Fixes #123" or "Relates to #123")
+3. Include screenshots or examples if relevant
+4. Ensure all tests pass
+5. Keep the scope focused - one PR should address one concern
 
-GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
-[creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
+### Code Style Guidelines
 
+- Follow the existing code style and patterns
+- Use TypeScript's type system effectively
+- Write clear comments for complex logic
+- Include JSDoc comments for functions and components
+- Use meaningful variable and function names
 
-## Finding contributions to work on
-Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any 'help wanted' issues is a great place to start.
+## Reporting Issues
 
+When reporting bugs or issues:
 
-## Code of Conduct
-This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct).
-For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
-opensource-codeofconduct@amazon.com with any additional questions or comments.
+1. Use the GitHub issue tracker
+2. Check if the issue already exists before creating a new one
+3. Provide detailed steps to reproduce the issue
+4. Include information about your environment (browser, OS, etc.)
+5. If possible, include screenshots or error messages
 
+## Feature Requests
 
-## Security issue notifications
-If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
+For feature requests:
 
+1. Describe the feature and its benefits clearly
+2. Explain how it fits into the existing project
+3. Consider the implementation complexity
+4. Be open to discussion about alternative approaches
 
-## Licensing
+## Documentation
 
-See the [LICENSE](LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
+Improving documentation is always valuable:
+
+- Fix typos or clarify existing documentation
+- Add examples for complex features
+- Improve installation or usage instructions
+- Add comments to code where needed
+
+## Questions?
+
+If you have questions about contributing, please open an issue with the label "question".
+
+## License
+
+By contributing to this project, you agree that your contributions will be licensed under the project's [MIT License](LICENSE).

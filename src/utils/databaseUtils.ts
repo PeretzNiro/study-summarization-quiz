@@ -2,6 +2,7 @@ import { generateClient } from 'aws-amplify/api';
 import type { Schema } from '../../amplify/data/resource';
 import { TableDetector } from '../services/TableDetector';
 
+// Initialize the Amplify API client with the app's data schema
 const client = generateClient<Schema>();
 
 /**
@@ -33,12 +34,12 @@ export async function checkForDuplicates(tableName: string, data: any): Promise<
       return null;
     }
     
-    // Build the filter object for the query
+    // Create compound filter with 'and' condition if multiple fields are present
     const filter = Object.keys(filters).length > 1
       ? { and: Object.entries(filters).map(([key, value]) => ({ [key]: value })) }
       : filters;
     
-    // Query the database
+    // Query the appropriate table based on the tableName parameter
     let result;
     switch (tableName) {
       case 'Course':
@@ -61,7 +62,7 @@ export async function checkForDuplicates(tableName: string, data: any): Promise<
         return null;
     }
     
-    // Return the first match if any
+    // Return the first match if any were found
     return result?.data && result.data.length > 0 ? result.data[0] : null;
   } catch (error) {
     console.error('Error checking for duplicates:', error);
@@ -78,13 +79,13 @@ export async function checkForDuplicates(tableName: string, data: any): Promise<
  */
 export async function updateRecord(tableName: string, existingRecord: any, newData: any): Promise<any> {
   try {
-    // Merge existing record with new data
+    // Merge the existing record ID with new data to ensure we update the correct record
     const updateData = {
       id: existingRecord.id,
       ...newData
     };
     
-    // Update the record
+    // Update the record in the appropriate table
     switch (tableName) {
       case 'Course':
         return await client.models.Course.update(updateData);

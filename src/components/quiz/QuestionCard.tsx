@@ -8,6 +8,10 @@ interface QuestionCardProps {
   isSubmitted: boolean;
 }
 
+/**
+ * Displays a single quiz question with multiple-choice options
+ * Handles user selection and shows feedback after submission
+ */
 const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
   selectedAnswerIndex,
@@ -20,6 +24,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       
       <div className="answer-choices">
         {question.answerChoices.map((choice, index) => {
+          // Determine visual state of each answer choice
           const isSelected = selectedAnswerIndex === index;
           const isCorrect = isSubmitted && index === question.correctAnswerIndex;
           const isWrong = isSubmitted && isSelected && index !== question.correctAnswerIndex;
@@ -37,7 +42,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   value={index}
                   checked={selectedAnswerIndex === index}
                   onChange={() => onAnswerSelect(index)}
-                  disabled={isSubmitted}
+                  disabled={isSubmitted} // Prevent changing answers after submission
                 />
                 <span>{choice}</span>
               </label>
@@ -46,6 +51,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         })}
       </div>
       
+      {/* Show explanation only after quiz submission */}
       {isSubmitted && (
         <div className="explanation">
           <h4>Explanation:</h4>

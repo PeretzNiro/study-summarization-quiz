@@ -5,7 +5,11 @@
 import { escapeRegExp } from './common';
 
 /**
- * Detects and removes repeating headers or footers
+ * Detects and removes repeating headers or footers from document content
+ * Uses frequency analysis to identify repeating lines that are likely
+ * not part of the main content
+ * @param content Raw text content to process
+ * @returns Content with repeating headers and footers removed
  */
 export function removeRepeatingHeaders(content: string): string {
   const lines = content.split('\n');
@@ -41,6 +45,9 @@ export function removeRepeatingHeaders(content: string): string {
 
 /**
  * Remove common headers and footers from academic PDFs
+ * Targets specific patterns typically found in educational materials
+ * @param content Raw text content to process
+ * @returns Content with common headers and footers removed
  */
 export function removeCommonHeadersFooters(content: string): string {
   const headerFooterPatterns = [

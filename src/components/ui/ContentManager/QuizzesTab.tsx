@@ -21,12 +21,16 @@ import {
 import { ActionMessage } from './types';
 
 interface QuizzesTabProps {
-  getAuthenticatedClient: () => Promise<any>;
-  courses: any[];
-  lectures: any[];
-  courseFilter: string;
+  getAuthenticatedClient: () => Promise<any>;  // Function to get authenticated API client
+  courses: any[];                              // Available courses data
+  lectures: any[];                             // Available lectures data
+  courseFilter: string;                        // Initial course filter value
 }
 
+/**
+ * Quiz management tab component for the Content Manager
+ * Provides functionality to view, filter, and edit quizzes and their questions
+ */
 const QuizzesTab: React.FC<QuizzesTabProps> = ({
   getAuthenticatedClient,
   courses,
@@ -48,22 +52,24 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
   const [questionFilterSearch, setQuestionFilterSearch] = useState('');
   const quizzesPerPage = 10;
 
-  // Action messages
+  // Action messages for user feedback
   const [actionMessage, setActionMessage] = useState<ActionMessage | null>(null);
-
-  // Add isRefreshing state
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Sync with parent component's course filter
   useEffect(() => {
     setQuizCourseFilter(courseFilter);
   }, [courseFilter]);
 
-  // Add fetchQuizzes function that can be reused
+  /**
+   * Fetch quizzes from the database with optional filtering
+   */
   const fetchQuizzes = async () => {
     try {
       setQuizLoading(true);
       setQuizError(null);
       
+      // Build filter based on selected course and lecture
       let filter: any = {};
       if (quizCourseFilter) {
         filter.courseId = { eq: quizCourseFilter };
@@ -90,12 +96,14 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
     }
   };
 
-  // Use this in the useEffect
+  // Fetch quizzes when filters change
   useEffect(() => {
     fetchQuizzes();
   }, [quizCourseFilter, quizLectureFilter, getAuthenticatedClient]);
 
-  // Add handleRefresh function
+  /**
+   * Manual refresh handler for quizzes list
+   */
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await fetchQuizzes();
@@ -114,19 +122,21 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
     quizPage * quizzesPerPage
   );
 
-  // Update the handleQuizSelect function
+  /**
+   * Selects a quiz for editing and loads its associated questions
+   * Uses progressive fallback strategy to find relevant questions
+   * @param quiz The quiz to edit
+   */
   const handleQuizSelect = async (quiz: any) => {
     setSelectedQuiz(quiz);
     const questionIds = quiz.questionIds || [];
     setSelectedQuestions(questionIds);
     
-    console.log("Selected quiz:", quiz);
-    console.log("Question IDs:", questionIds);
-    
     try {
       const authClient = await getAuthenticatedClient();
       
-      // First try - fetch ALL questions for this course/lecture
+      // Progressive search strategy for finding relevant questions:
+      // 1. Try course + lecture filter
       let filter = {
         and: [
           { courseId: { eq: quiz.courseId } },
@@ -134,54 +144,38 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
         ]
       };
       
-      console.log("Fetching ALL questions with course/lecture filter:", filter);
       let result = await authClient.models.QuizQuestion.list({ filter });
       
+      // 2. If no results, try just course filter
       if (!result.data || result.data.length === 0) {
-        console.log("No questions found with course/lecture filter, trying with just courseId");
-        
-        // Try with just courseId
         filter = { and: [{ courseId: { eq: quiz.courseId } }] };
         result = await authClient.models.QuizQuestion.list({ filter });
         
-        if (!result.data || result.data.length === 0) {
-          console.log("No questions found for this course, trying to fetch by IDs");
+        // 3. If still no results but we have question IDs, try direct fetch by ID
+        if ((!result.data || result.data.length === 0) && questionIds.length > 0) {
+          const questionPromises = questionIds.map((id: string) => 
+            authClient.models.QuizQuestion.get({ id })
+          );
           
-          // If we have questionIds but couldn't find matching questions by course/lecture,
-          // try to fetch them directly by ID
-          if (questionIds.length > 0) {
-            const questionPromises = questionIds.map((id: string) => 
-              authClient.models.QuizQuestion.get({ id })
-            );
+          try {
+            const questionResults = await Promise.all(questionPromises);
+            const validResults = questionResults
+              .filter(result => result.data !== null)
+              .map(result => result.data);
             
-            try {
-              const questionResults = await Promise.all(questionPromises);
-              const validResults = questionResults
-                .filter(result => result.data !== null)
-                .map(result => result.data);
-              
-              console.log(`Found ${validResults.length} questions by ID`);
-              
-              if (validResults.length > 0) {
-                // If we found questions by ID, use those
-                setAvailableQuestions(validResults);
-                setFilteredAvailableQuestions(validResults);
-                return;
-              }
-            } catch (idError) {
-              console.error("Error fetching questions by ID:", idError);
+            if (validResults.length > 0) {
+              // If we found questions by ID, use those
+              setAvailableQuestions(validResults);
+              setFilteredAvailableQuestions(validResults);
+              return;
             }
+          } catch (idError) {
+            console.error("Error fetching questions by ID:", idError);
           }
-          
-          // Last resort: fetch all questions
-          console.log("Fetching all questions as fallback");
-          result = await authClient.models.QuizQuestion.list();
         }
       }
       
-      console.log(`Found ${result.data?.length || 0} questions for this course/lecture`);
-      
-      // Sort questions to put already selected ones first, then by approval status and difficulty
+      // Sort questions to prioritize those already in the quiz
       const sortedQuestions = [...(result.data || [])].sort((a, b) => {
         // First sort by whether question ID is in the quiz's questionIds
         const aInQuiz = questionIds.includes(a.id);
@@ -213,7 +207,9 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
     }
   };
 
-  // Handle checkbox change when selecting/deselecting questions
+  /**
+   * Toggles question selection for the current quiz
+   */
   const handleQuestionSelect = (questionId: string, checked: boolean) => {
     if (checked) {
       setSelectedQuestions([...selectedQuestions, questionId]);
@@ -222,7 +218,9 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
     }
   };
 
-  // Save updated quiz questions
+  /**
+   * Saves the updated question list to the quiz
+   */
   const handleSaveQuiz = async () => {
     if (!selectedQuiz) return;
     
@@ -274,6 +272,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
         </Button>
       </Flex>
       
+      {/* Action message display */}
       {actionMessage && (
         <Alert 
           className='radius-s'
@@ -286,6 +285,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
         </Alert>
       )}
       
+      {/* Quiz editor view */}
       {selectedQuiz ? (
         <div className="quiz-editor">
           <Heading level={5}>
@@ -300,6 +300,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
           </Alert>
           
           <div className="question-selector">
+            {/* No questions available state */}
             {availableQuestions.length === 0 ? (
               <div>
                 <Alert className='radius-s' variation="warning" marginBottom="1rem">
@@ -315,16 +316,15 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                   </ul>
                 </Text>
                 
+                {/* Fallback to show all questions if none are found for this course/lecture */}
                 <Flex justifyContent="center" marginTop="1rem">
                   <Button 
                     variation="primary"
                     onClick={async () => {
                       try {
-                        // Show all questions regardless of lecture
                         const authClient = await getAuthenticatedClient();
                         const result = await authClient.models.QuizQuestion.list();
                         
-                        console.log(`Found ${result.data?.length || 0} total questions`);
                         setAvailableQuestions(result.data || []);
                         setFilteredAvailableQuestions(result.data || []);
                         
@@ -344,6 +344,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
               </div>
             ) : (
               <>
+                {/* Question selection interface */}
                 <Flex className='flex-wrap' justifyContent="space-between" marginBottom="1rem">
                   <Text>
                     <strong>Selected:</strong> {selectedQuestions.length} questions | 
@@ -353,7 +354,6 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                   <Button 
                     size="small"
                     onClick={() => {
-                      // Add all questions to the quiz
                       setSelectedQuestions(availableQuestions.map(q => q.id));
                     }}
                   >
@@ -361,6 +361,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                   </Button>
                 </Flex>
                 
+                {/* Question search filter */}
                 <SearchField
                   label="Search questions"
                   placeholder="Filter questions by text or topic"
@@ -375,13 +376,12 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                       return;
                     }
                     
-                    // Filter questions but keep the same order
+                    // Filter questions but preserve selected items at top
                     const filtered = availableQuestions.filter(q => 
                       q.question?.toLowerCase().includes(searchTerm) || 
                       q.topicTag?.toLowerCase().includes(searchTerm)
                     );
                     
-                    // Sort filtered questions
                     filtered.sort((a, b) => {
                       const aSelected = selectedQuestions.includes(a.id);
                       const bSelected = selectedQuestions.includes(b.id);
@@ -390,7 +390,6 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                       return 0;
                     });
                     
-                    // Update filtered questions instead of original questions
                     setFilteredAvailableQuestions(filtered);
                   }}
                   onClear={() => {
@@ -401,6 +400,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                   hasSearchIcon
                 />
                 
+                {/* Scrollable question list */}
                 <div className="question-list" style={{ maxHeight: '400px', overflowY: 'auto', padding: '1rem', border: '1px solid #e4e4e4', borderRadius: '8px' }}>
                   {filteredAvailableQuestions.map(question => {
                     const isSelected = selectedQuestions.includes(question.id);
@@ -428,6 +428,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                             />
                           </Flex>
                           
+                          {/* Question tags and metadata */}
                           <Flex className='flex-wrap' gap="0.5rem" marginLeft="1.5rem">
                             <Badge variation={
                               question.difficulty?.toLowerCase() === 'easy' ? 'info' :
@@ -455,6 +456,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
             )}
           </div>
           
+          {/* Editor action buttons */}
           <Flex justifyContent="space-between" marginTop="1.5rem">
             <Button variation="link" onClick={() => {
               setSelectedQuiz(null);
@@ -469,6 +471,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
         </div>
       ) : (
         <>
+          {/* Quiz list view with filters */}
           <Flex justifyContent="space-between" marginBottom="1rem">
             <Flex direction="row" gap="1rem">
               <SelectField
@@ -518,6 +521,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
             />
           </Flex>
 
+          {/* Loading, error, and empty states */}
           {quizLoading ? (
             <Flex justifyContent="center" padding="2rem">
               <Loader size="large" />
@@ -528,6 +532,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
             <Alert className='radius-s' variation="info">No quizzes found</Alert>
           ) : (
             <>
+              {/* Quiz data table */}
               <Table highlightOnHover>
                 <TableHead>
                   <TableRow>
@@ -562,6 +567,7 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
                 ))}</TableBody>
               </Table>
               
+              {/* Pagination controls */}
               <Pagination
                 currentPage={quizPage}
                 totalPages={Math.ceil(filteredQuizzes.length / quizzesPerPage)}

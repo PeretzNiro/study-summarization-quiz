@@ -5,7 +5,11 @@
 import { escapeRegExp } from './common';
 
 /**
- * Cleans PowerPoint-specific artifacts
+ * Cleans PowerPoint-specific artifacts that occur during text extraction
+ * Normalizes slide content and removes common presentation elements
+ * @param content Raw extracted PowerPoint text
+ * @param metadata Optional metadata about the presentation
+ * @returns Cleaned and normalized PowerPoint content
  */
 export function cleanPptContent(content: string, metadata: any = {}): string {
   let result = content;

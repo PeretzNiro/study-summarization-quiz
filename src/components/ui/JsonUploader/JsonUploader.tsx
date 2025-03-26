@@ -20,27 +20,47 @@ import { checkForDuplicates, updateRecord } from '../../../utils/databaseUtils';
 import { CustomModal } from '../modal/CustomModal';
 import './JsonUploader.css';
 
+/**
+ * JSON Upload tool for adding data to DynamoDB tables
+ * Provides intelligent table detection, validation, and duplicate handling
+ */
 const JsonUploader: React.FC = () => {
+  // Input state
   const [jsonText, setJsonText] = useState<string>('');
   const [jsonFile, setJsonFile] = useState<File | null>(null);
   const [parsedJson, setParsedJson] = useState<any>(null);
+  
+  // Analysis and validation state
   const [tableDetectionResults, setTableDetectionResults] = useState<DetectionResult[]>([]);
   const [selectedTable, setSelectedTable] = useState<string>('');
   const [validationResult, setValidationResult] = useState<{ isValid: boolean, missingFields: string[] } | null>(null);
+  
+  // UI state
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'upload' | 'analyze' | 'validate' | 'upload-result'>('upload');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Duplicate handling state
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [existingRecord, setExistingRecord] = useState<any>(null);
+  
+  // Reference to hidden file input
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Handle text input changes in the JSON textarea
+   */
   const handleJsonTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJsonText(e.target.value);
     setJsonFile(null);
     resetState();
   };
 
+  /**
+   * Handle file selection from the file input
+   * Reads file content and updates the JSON textarea
+   */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -60,6 +80,10 @@ const JsonUploader: React.FC = () => {
     reader.readAsText(file);
   };
 
+  /**
+   * Reset all state values to their defaults
+   * Used when switching between input methods or starting over
+   */
   const resetState = () => {
     setParsedJson(null);
     setTableDetectionResults([]);
@@ -70,6 +94,10 @@ const JsonUploader: React.FC = () => {
     setStep('upload');
   };
 
+  /**
+   * Parse and analyze the provided JSON input
+   * Detects potential tables and validates against schemas
+   */
   const handleAnalyze = () => {
     setIsLoading(true);
     setError(null);
@@ -101,6 +129,9 @@ const JsonUploader: React.FC = () => {
     }
   };
 
+  /**
+   * Handle table selection and re-validate JSON data against the selected table
+   */
   const handleTableSelect = (tableName: string) => {
     setSelectedTable(tableName);
     
@@ -110,6 +141,10 @@ const JsonUploader: React.FC = () => {
     }
   };
 
+  /**
+   * Attempt to upload JSON data to the selected table
+   * Checks for duplicates before proceeding
+   */
   const handleUpload = async () => {
     if (!selectedTable || !parsedJson) return;
     
@@ -117,15 +152,18 @@ const JsonUploader: React.FC = () => {
     setError(null);
     
     try {
+      // Check if a record with the same key already exists
       const existingRecord = await checkForDuplicates(selectedTable, parsedJson);
       
       if (existingRecord) {
+        // Show confirmation modal for duplicate records
         setExistingRecord(existingRecord);
         setShowDuplicateModal(true);
         setIsLoading(false);
         return;
       }
       
+      // Proceed with uploading new record
       const result = await JsonUploadService.uploadToTable(selectedTable, parsedJson);
       setUploadResult(result);
       setStep('upload-result');
@@ -137,6 +175,10 @@ const JsonUploader: React.FC = () => {
     }
   };
 
+  /**
+   * Update an existing record with new data
+   * Called when user confirms update in duplicate modal
+   */
   const handleUpdateRecord = async () => {
     setIsLoading(true);
     setShowDuplicateModal(false);
@@ -163,6 +205,9 @@ const JsonUploader: React.FC = () => {
     }
   };
 
+  /**
+   * Reset form to initial state
+   */
   const handleReset = () => {
     setJsonText('');
     setJsonFile(null);
@@ -172,6 +217,9 @@ const JsonUploader: React.FC = () => {
     }
   };
 
+  /**
+   * Render the first step: JSON input
+   */
   const renderUploadStep = () => (
     <Card variation="elevated" className='radius'>
       <Heading className='heading-margin' level={3}>1. Upload JSON Data</Heading>
@@ -228,6 +276,9 @@ const JsonUploader: React.FC = () => {
     </Card>
   );
 
+  /**
+   * Render the second step: Table detection and validation
+   */
   const renderAnalyzeStep = () => {
     if (!tableDetectionResults.length) {
       return (
@@ -257,6 +308,7 @@ const JsonUploader: React.FC = () => {
                     {result.suggestedTable}
                   </Text>
                   
+                  {/* Confidence indicator with color coding */}
                   <Badge
                     backgroundColor={
                       result.confidence > 79 ? '#E6F4EA' : 
@@ -278,6 +330,7 @@ const JsonUploader: React.FC = () => {
                 {result.reasoning}
               </Text>
               
+              {/* Expandable sections for matched and missing fields */}
               <Accordion marginLeft="1.8rem" marginTop="0.5rem">
                 <Accordion.Item value="matched">
                   <Accordion.Trigger>Matched Fields</Accordion.Trigger>
@@ -309,6 +362,7 @@ const JsonUploader: React.FC = () => {
         
         <Divider marginTop="1rem" marginBottom="1rem" />
         
+        {/* Validation section showing required fields status */}
         {validationResult && (
           <>
             <Heading className='padding-bottom' level={4}>Validation Result</Heading>
@@ -344,6 +398,9 @@ const JsonUploader: React.FC = () => {
     );
   };
 
+  /**
+   * Render the third step: Upload result information
+   */
   const renderUploadResult = () => {
     if (!uploadResult) return null;
     
@@ -361,6 +418,7 @@ const JsonUploader: React.FC = () => {
           </Alert>
         )}
         
+        {/* Expandable section for detailed response data */}
         {uploadResult.data && (
           <Accordion marginTop="1rem">
             <Accordion.Item value="details">
@@ -386,6 +444,9 @@ const JsonUploader: React.FC = () => {
     );
   };
 
+  /**
+   * Select the appropriate content based on current step
+   */
   const renderCurrentStep = () => {
     if (isLoading && step !== 'upload-result') {
       return (
@@ -413,6 +474,7 @@ const JsonUploader: React.FC = () => {
       <Heading level={2} marginBottom="1.5rem">JSON Upload System</Heading>
       {renderCurrentStep()}
       
+      {/* Modal for confirming updates to existing records */}
       <CustomModal isOpen={showDuplicateModal} onClose={() => setShowDuplicateModal(false)}>
         <Heading level={3} style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #e0e0e0' }}>
           Record Already Exists

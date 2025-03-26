@@ -12,17 +12,20 @@ import { detectSimpleTables } from './tables';
  * @param content The raw extracted text content
  * @param documentType The type of document (pdf, pptx, etc.)
  * @param metadata Additional metadata that might help with processing
+ * @returns Processed and normalized content ready for further analysis
  */
 export function postprocessContent(content: string, documentType: string, metadata: any = {}): string {
   // Apply document-specific processing
   let processedContent = content;
   
   if (documentType === 'pdf') {
+    // Handle PDF-specific formatting issues
     processedContent = cleanPdfContent(processedContent, metadata);
     
     // Try to detect and format simple tables - apply after initial cleaning
     processedContent = detectSimpleTables(processedContent);
   } else if (documentType === 'pptx' || documentType === 'ppt') {
+    // Handle PowerPoint-specific formatting issues
     processedContent = cleanPptContent(processedContent, metadata);
   }
   

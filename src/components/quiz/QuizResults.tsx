@@ -3,14 +3,18 @@ import { Link } from 'react-router-dom';
 import { QuizQuestion, UserAnswer } from './types';
 
 interface QuizResultsProps {
-  questions: QuizQuestion[];
-  userAnswers: UserAnswer[];
-  score: number;
-  isPassed: boolean;
-  onRestartQuiz: () => void;
-  courseId: string; // Add this prop to pass the courseId
+  questions: QuizQuestion[];        // List of all quiz questions
+  userAnswers: UserAnswer[];        // User's submitted answers
+  score: number;                    // Score as a percentage
+  isPassed: boolean;                // Whether the user passed the quiz
+  onRestartQuiz: () => void;        // Handler for restarting the quiz
+  courseId: string;                 // Course identifier for navigation
 }
 
+/**
+ * Displays quiz results with scoring information and detailed feedback
+ * Shows correct/incorrect answers and provides explanations
+ */
 const QuizResults: React.FC<QuizResultsProps> = ({
   questions,
   userAnswers,
@@ -19,6 +23,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
   onRestartQuiz,
   courseId
 }) => {
+  // Calculate number of correct answers
   const correctCount = userAnswers.filter((answer) => {
     const question = questions.find(q => q.id === answer.questionId);
     return question && answer.selectedAnswerIndex === question.correctAnswerIndex;
@@ -26,6 +31,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
   
   return (
     <div className="quiz-results">
+      {/* Score summary section with pass/fail indicator */}
       <div className={`score-summary ${isPassed ? 'passed' : 'failed'}`}>
         <h2>Quiz Complete!</h2>
         <p className="score">
@@ -38,22 +44,24 @@ const QuizResults: React.FC<QuizResultsProps> = ({
           {isPassed ? '🎉 Congratulations! You passed the quiz.' : '😔 You did not pass the quiz. Try again!'}
         </p>
         
+        {/* Navigation options */}
         <div className="action-buttons">
           <button onClick={onRestartQuiz} className="amplify-button amplify-button--primary">
             Take Quiz Again
           </button>
           
-          {/* Add the Return to Course button */}
           <Link to={`/courses/${courseId}`} className="amplify-button amplify-button--primary--overlay">
             Return to Course
           </Link>
         </div>
       </div>
       
+      {/* Detailed results section showing each question with feedback */}
       <div className="results-details">
         <h3>Detailed Results</h3>
         
         {questions.map((question, index) => {
+          // Find user's answer for this question
           const userAnswer = userAnswers.find(a => a.questionId === question.id);
           const userAnswerIndex = userAnswer?.selectedAnswerIndex;
           const isCorrect = userAnswerIndex !== null && userAnswerIndex === question.correctAnswerIndex;
@@ -62,6 +70,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
             <div key={question.id} className={`result-item ${isCorrect ? 'correct' : 'wrong'}`}>
               <h4>Question {index + 1}: {question.question}</h4>
               
+              {/* Show user's selected answer */}
               <p>
                 <strong>Your Answer:</strong>{' '}
                 {userAnswerIndex !== null && userAnswerIndex !== undefined
@@ -69,11 +78,13 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                   : 'Not answered'}
               </p>
               
+              {/* Show the correct answer */}
               <p>
                 <strong>Correct Answer:</strong>{' '}
                 {question.answerChoices[question.correctAnswerIndex]}
               </p>
               
+              {/* Show explanation for the correct answer */}
               <div className="explanation">
                 <strong>Explanation:</strong>
                 <p>{question.explanation}</p>

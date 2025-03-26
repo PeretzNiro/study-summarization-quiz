@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
-// Update the interface to match expected format
+// Define the structure for quiz questions
 interface QuizQuestion {
   question: string;
   options: string[];      // Should not include A, B, C, D prefixes
@@ -12,6 +12,9 @@ interface QuizQuestion {
 
 /**
  * Extract JSON content from model response
+ * Handles various response formats that may contain JSON data
+ * @param text Raw text response from the AI model
+ * @returns Parsed JSON object or null if extraction fails
  */
 function extractJsonFromText(text: string): any {
   try {
@@ -35,7 +38,12 @@ function extractJsonFromText(text: string): any {
   }
 }
 
-// Process options and answers to remove the A, B, C, D prefixes
+/**
+ * Standardizes question format by cleaning up options and answers
+ * Removes letter prefixes and ensures consistent formatting
+ * @param question Raw question object from AI response
+ * @returns Cleaned and standardized question object
+ */
 function processQuestion(question: any): QuizQuestion {
   if (!question) return question;
   
@@ -73,6 +81,11 @@ function processQuestion(question: any): QuizQuestion {
 
 /**
  * Generate educational quiz questions based on lecture content
+ * Uses Google's Gemini AI to create varied difficulty multiple-choice questions
+ * @param text Lecture content or summary to generate questions from
+ * @param apiKey Google Gemini API key
+ * @param questionCount Number of questions to generate (default: 10)
+ * @returns Array of formatted quiz questions or error message string
  */
 export async function generateQuizQuestions(
   text: string, 

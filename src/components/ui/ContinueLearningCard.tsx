@@ -5,11 +5,15 @@ import { UserProgress, Course } from '../../types/models';
 import { useCourseData } from '../../context/CourseContext';
 
 interface ContinueLearningCardProps {
-  courseId: string;
-  coursesData: Course[];
-  progress: UserProgress;
+  courseId: string;             // Unique identifier for the course
+  coursesData: Course[];        // Array of available courses
+  progress: UserProgress;       // User's progress data for this course
 }
 
+/**
+ * Card component that displays a user's course progress and allows them to continue learning
+ * Shows completion percentage, last accessed date, and provides a direct navigation link
+ */
 const ContinueLearningCard: React.FC<ContinueLearningCardProps> = ({ 
   courseId, 
   coursesData,
@@ -20,6 +24,7 @@ const ContinueLearningCard: React.FC<ContinueLearningCardProps> = ({
   const totalLectures = lectureCounts[courseId] || 0;
   const course = coursesData.find(c => c.courseId === courseId);
   
+  // Don't render if course or progress data is missing
   if (!course || !progress) return null;
   
   // Calculate progress percentage dynamically
@@ -33,6 +38,9 @@ const ContinueLearningCard: React.FC<ContinueLearningCardProps> = ({
     ? new Date(progress.lastAccessed).toLocaleDateString() 
     : 'Never';
   
+  /**
+   * Navigate to the lecture where the user left off
+   */
   const handleContinue = () => {
     navigate(`/courses/${courseId}/lectures/${progress.lectureId}`);
   };
@@ -43,7 +51,7 @@ const ContinueLearningCard: React.FC<ContinueLearningCardProps> = ({
         <Heading level={3}>{course.title}</Heading>
         <Text>Continue where you left off</Text>
         
-        {/* Custom Progress Bar */}
+        {/* Visual progress indicator */}
         <View className="progress-container">
           <View 
             className="progress-bar"

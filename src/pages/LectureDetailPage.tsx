@@ -17,6 +17,10 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 const client = generateClient<Schema>();
 type Lecture = Schema['Lecture']['type'];
 
+/**
+ * Creates an authenticated API client using the current user session
+ * @returns Authenticated API client or default client if authentication fails
+ */
 const getAuthenticatedClient = async () => {
   try {
     const { tokens } = await fetchAuthSession();
@@ -30,11 +34,16 @@ const getAuthenticatedClient = async () => {
   }
 };
 
+/**
+ * Component for displaying detailed lecture content with rich formatting
+ * Handles lecture data fetching, progress tracking, and navigation
+ */
 const LectureDetailPage: React.FC = () => {
   const { courseId, lectureId } = useParams<{ courseId: string; lectureId: string }>();
   const { user } = useAuthenticator((context: any) => [context.user]);
   const navigate = useNavigate();
   
+  // State management
   const [lecture, setLecture] = useState<Lecture | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +51,11 @@ const LectureDetailPage: React.FC = () => {
   const [progressError, setProgressError] = useState<string | null>(null);
   const [isLectureCompleted, setIsLectureCompleted] = useState(false);
 
-  // Helper function for badge variation
+  /**
+   * Maps difficulty level to UI badge variation
+   * @param difficulty The difficulty level string
+   * @returns CSS class suffix for the badge
+   */
   function getDifficultyVariation(difficulty: string): "info" | "warning" | "error" | "natural" {
     const lowerDifficulty = difficulty.toLowerCase();
     if (lowerDifficulty === 'easy') return "info";
@@ -51,6 +64,7 @@ const LectureDetailPage: React.FC = () => {
     return "natural"; // Default
   }
 
+  // Fetch lecture details when component mounts or parameters change
   useEffect(() => {
     async function fetchLectureDetails() {
       if (!courseId || !lectureId) return;
@@ -114,22 +128,19 @@ const LectureDetailPage: React.FC = () => {
           const currentProgress = existingProgress[0];
           const completedLectures = new Set(currentProgress.completedLectures || []);
           
-          // CHECK if this lecture is already marked as completed, but DON'T add it
+          // Check if this lecture is already marked as completed without adding it
           if (lectureId) {
             setIsLectureCompleted(completedLectures.has(lectureId));
           }
           
-          // Update the last accessed timestamp, but don't modify completed lectures
+          // Update the last accessed timestamp without modifying completed lectures
           await authClient.models.UserProgress.update({
             id: currentProgress.id,
             lectureId: lectureId, // Current lecture
             lastAccessed: now,
-            // Don't change completedLectures here
           });
-          
-          // Don't set isLectureCompleted to true automatically
         } else {
-          // Create new progress record WITHOUT marking lecture as completed
+          // Create new progress record without marking lecture as completed yet
           await authClient.models.UserProgress.create({
             userId: user.username,
             courseId: courseId!,
@@ -153,16 +164,21 @@ const LectureDetailPage: React.FC = () => {
     updateUserProgress();
   }, [user, courseId, lectureId, lecture]);
 
+  /**
+   * Navigate to the quiz for this lecture
+   */
   const handleStartQuiz = () => {
     if (courseId && lectureId) {
       navigate(`/courses/${courseId}/lectures/${lectureId}/quiz`);
     }
   };
 
+  // Loading state
   if (loading) {
     return <div className="loading-container">Loading lecture content...</div>;
   }
 
+  // Error state
   if (error || !lecture) {
     return <div className="error-container">{error || 'Lecture not found'}</div>;
   }
@@ -199,23 +215,24 @@ const LectureDetailPage: React.FC = () => {
               rehypePlugins={[rehypeRaw, rehypeKatex]}
               remarkPlugins={[remarkGfm, remarkMath]}
               components={{
+                // Remap heading levels for proper hierarchy
                 h1: ({node, children, ...props}) => <h2 className="summary-heading" {...props}>{children}</h2>,
                 h2: ({node, children, ...props}) => <h3 className="summary-heading" {...props}>{children}</h3>,
                 h3: ({node, children, ...props}) => <h4 className="summary-heading" {...props}>{children}</h4>,
-                // Add table wrapper component
+                // Add responsive table wrapper
                 table: ({node, children, ...props}) => (
                   <div className="table-wrapper">
                     <table {...props}>{children}</table>
                   </div>
                 ),
-                // Keep your existing code component
+                // Syntax highlighting for code blocks
                 code({node, inline, className, children, ...props}: {
                   node?: any;
                   inline?: boolean;
                   className?: string;
                   children?: React.ReactNode;
                   [key: string]: any;
-                }) {
+}) {
                   const match = /language-(\w+)/.exec(className || '');
                   return !inline && match ? (
                     <SyntaxHighlighter

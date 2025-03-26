@@ -1,15 +1,20 @@
 import { getUrl, list, remove } from 'aws-amplify/storage';
 
+/**
+ * Represents an item in S3 storage
+ */
 export interface StorageItem {
-  key: string;
-  size: number;
-  eTag: string;
-  lastModified: Date;
-  folder?: boolean;
+  key: string;                // Full path to the item in S3
+  size: number;               // Size in bytes
+  eTag: string;               // Entity tag for object version identification
+  lastModified: Date;         // Last modification timestamp
+  folder?: boolean;           // Whether the item is a folder
 }
 
+/**
+ * Service for interacting with AWS S3 storage via Amplify
+ */
 export class StorageService {
-  // Remove the ROOT_FOLDER constant - we'll use direct folder names
   private static readonly ACCESS_LEVEL = 'protected';
   
   /**
@@ -19,32 +24,30 @@ export class StorageService {
   static async listFolders(): Promise<string[]> {
     try {
       const result = await list({
-        // No prefix needed anymore
         options: {
           accessLevel: this.ACCESS_LEVEL,
           listAll: true
         }
       });
       
-      // Filter for folders (items that end with /)
+      // Extract unique folder paths from the results
       const folders = new Set<string>();
       
       result.items.forEach(item => {
-        // Extract folder name from path
+        // Folder items end with a trailing slash
         const path = item.key;
         if (path.endsWith('/')) {
-          // Just remove the trailing slash
+          // Remove the trailing slash
           const folderName = path.slice(0, -1);
-          if (folderName) { // Don't add the empty string
+          if (folderName) {
             folders.add(folderName);
           }
         } else {
-          // Get parent folder
+          // For files, extract all parent folder paths
           const pathParts = path.split('/');
           if (pathParts.length > 1) {
-            // Add all parent folders
             const folderPath = pathParts.slice(0, -1).join('/');
-            if (folderPath) { // Don't add the empty string
+            if (folderPath) {
               folders.add(folderPath);
             }
           }
@@ -61,11 +64,11 @@ export class StorageService {
   /**
    * Lists all files in a specific folder
    * @param folderPath Folder path without trailing slash
-   * @returns Array of file names
+   * @returns Array of file names (without folder path)
    */
   static async listFilesInFolder(folderPath: string): Promise<string[]> {
     try {
-      // Ensure folder path ends with /
+      // Ensure folder path ends with / for proper prefix filtering
       const normalizedPath = folderPath.endsWith('/') ? folderPath : `${folderPath}/`;
       
       const result = await list({
@@ -76,12 +79,12 @@ export class StorageService {
         }
       });
       
-      // Extract file names without the folder prefix
+      // Extract only file names without the folder prefix
       const files = result.items
-        .filter(item => !item.key.endsWith('/')) // Filter out subfolders
+        .filter(item => !item.key.endsWith('/')) // Exclude subfolders
         .map(item => {
           const keyParts = item.key.split('/');
-          return keyParts[keyParts.length - 1]; // Get just the filename
+          return keyParts[keyParts.length - 1]; // Return only the filename
         });
       
       return files;
@@ -99,11 +102,11 @@ export class StorageService {
    */
   static async checkFileExists(folderPath: string, fileName: string): Promise<boolean> {
     try {
-      // Ensure folder path ends with /
+      // Construct full file path with normalized folder path
       const normalizedPath = folderPath.endsWith('/') ? folderPath : `${folderPath}/`;
       const filePath = `${normalizedPath}${fileName}`;
       
-      // Try to get URL which will throw if file doesn't exist
+      // getUrl with validateObjectExistence will throw if the file doesn't exist
       await getUrl({
         key: filePath,
         options: {

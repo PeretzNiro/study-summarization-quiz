@@ -4,6 +4,8 @@
 
 /**
  * Normalizes whitespace throughout the document
+ * @param content Text content to normalize
+ * @returns Text with standardized spacing
  */
 export function normalizeWhitespace(content: string): string {
   // Replace multiple spaces with a single space
@@ -17,6 +19,9 @@ export function normalizeWhitespace(content: string): string {
 
 /**
  * Removes redundant line breaks while preserving paragraph structure
+ * Maintains formatting for tables, slide headers, and lists
+ * @param content Text content to process
+ * @returns Text with optimized line breaks
  */
 export function removeRedundantLineBreaks(content: string): string {
   // Keep paragraph breaks (double newlines) but remove single breaks that aren't needed
@@ -92,6 +97,8 @@ export function removeRedundantLineBreaks(content: string): string {
 
 /**
  * Identifies and removes page numbers and similar artifacts
+ * @param content Text content to process
+ * @returns Text with page number artifacts removed
  */
 export function removePageNumbers(content: string): string {
   // Remove standalone page numbers
@@ -106,6 +113,8 @@ export function removePageNumbers(content: string): string {
 
 /**
  * Merges sentences that have been broken across lines
+ * @param content Text content to process
+ * @returns Text with broken sentences rejoined
  */
 export function mergeBrokenSentences(content: string): string {
   // Pattern: line ending without punctuation followed by line starting with lowercase
@@ -114,6 +123,8 @@ export function mergeBrokenSentences(content: string): string {
 
 /**
  * Normalize spacing in the document
+ * @param content Text content to process
+ * @returns Text with standardized spacing and punctuation
  */
 export function normalizeSpacing(content: string): string {
   return content
@@ -127,6 +138,8 @@ export function normalizeSpacing(content: string): string {
 
 /**
  * Fix broken sentences
+ * @param content Text content to process
+ * @returns Text with sentence fragments rejoined
  */
 export function fixBrokenSentences(content: string): string {
   // Pattern: line ending without punctuation followed by line starting with lowercase

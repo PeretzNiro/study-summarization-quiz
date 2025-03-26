@@ -2,6 +2,10 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Flex, Loader, Text, Alert } from '@aws-amplify/ui-react';
 
+/**
+ * Protected route component that restricts access to admin users only
+ * Handles authentication state, loading states, and access control
+ */
 const AdminRoute = () => {
   const { isAdmin, isAuthenticated, isLoading } = useAuth();
 
@@ -20,7 +24,7 @@ const AdminRoute = () => {
     return <Navigate to="/" replace />;
   }
 
-  // Show access denied for non-admin users
+  // Show access denied for authenticated but non-admin users
   if (!isAdmin) {
     return (
       <Flex direction="column" alignItems="center" justifyContent="center" padding="2rem">
@@ -36,7 +40,7 @@ const AdminRoute = () => {
     );
   }
 
-  // Allow access for admin users
+  // Render child routes when user is authenticated and has admin privileges
   return <Outlet />;
 };
 

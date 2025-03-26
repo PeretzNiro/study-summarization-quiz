@@ -3,7 +3,9 @@
  */
 
 /**
- * Improve mathematical notation
+ * Improve mathematical notation by fixing common extraction artifacts
+ * @param content Text content to process
+ * @returns Content with standardized math notation
  */
 export function fixMathNotation(content: string): string {
   return content
@@ -26,6 +28,8 @@ export function fixMathNotation(content: string): string {
 
 /**
  * Clean up repeated punctuation (common in PDF extraction errors)
+ * @param content Text content to process
+ * @returns Content with normalized punctuation
  */
 export function cleanRepeatedPunctuation(content: string): string {
   return content
@@ -35,7 +39,9 @@ export function cleanRepeatedPunctuation(content: string): string {
 }
 
 /**
- * Identifies and enhances mathematical formulas
+ * Identifies and enhances mathematical formulas for better readability
+ * @param content Text content to process
+ * @returns Content with enhanced mathematical notation
  */
 export function enhanceMathematicalContent(content: string): string {
   let enhancedContent = content;

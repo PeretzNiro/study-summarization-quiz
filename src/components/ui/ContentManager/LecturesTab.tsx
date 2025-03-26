@@ -23,16 +23,22 @@ import { CustomModal } from '../../ui/modal/CustomModal';
 import { ActionMessage } from './types';
 
 interface LecturesTabProps {
-  getAuthenticatedClient: () => Promise<any>;
-  courses: any[];
-  lectures: any[];
-  courseFilter: string;
-  setCourseFilter: React.Dispatch<React.SetStateAction<string>>;
-  refreshLectures: () => Promise<void>;
+  getAuthenticatedClient: () => Promise<any>;  // Function to get authenticated API client
+  courses: any[];                              // Available courses data
+  lectures: any[];                             // Available lectures data
+  courseFilter: string;                        // Initial course filter value
+  setCourseFilter: React.Dispatch<React.SetStateAction<string>>;  // Function to update course filter
+  refreshLectures: () => Promise<void>;        // Function to refresh lecture data
 }
 
-const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => {
-  // State for lectures
+/**
+ * Component for managing lecture content
+ * Provides filtering, editing and detailed viewing of course lecture materials
+ */
+const LecturesTab: React.FC<LecturesTabProps> = ({ 
+  getAuthenticatedClient
+}) => {
+  // State for lectures data
   const [lectures, setLectures] = useState<any[]>([]);
   const [courseFilter, setCourseFilter] = useState<string>('');
   const [courses, setCourses] = useState<any[]>([]);
@@ -42,14 +48,16 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
   const [lectureSearch, setLectureSearch] = useState('');
   const lecturesPerPage = 10;
 
-  // State for edit modal
+  // State for lecture editing modal
   const [editingLecture, setEditingLecture] = useState<any | null>(null);
   const [isLectureModalOpen, setIsLectureModalOpen] = useState(false);
 
-  // State for action messages
+  // User feedback messaging
   const [actionMessage, setActionMessage] = useState<ActionMessage | null>(null);
 
-  // Fetch courses on component mount
+  /**
+   * Fetch course data when component mounts
+   */
   useEffect(() => {
     async function fetchCourses() {
       try {
@@ -65,23 +73,25 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
     fetchCourses();
   }, [getAuthenticatedClient]);
 
-  // Fetch lectures when course filter changes
+  /**
+   * Fetch lectures when course filter changes
+   * Applies filtering on the server side for better performance
+   */
   useEffect(() => {
     async function fetchLectures() {
       try {
         setLectureLoading(true);
         setLectureError(null);
         
+        // Build filter based on selected course
         const filter = courseFilter ? 
           { courseId: { eq: courseFilter } } : 
           undefined;
         
         const authClient = await getAuthenticatedClient();
-                
         const result = await authClient.models.Lecture.list({ filter });
         
         if (result.errors && result.errors.length > 0) {
-          console.error('GraphQL errors:', result.errors);
           throw new Error(`Failed to fetch lectures: ${result.errors[0].message}`);
         }
         
@@ -109,14 +119,15 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
     lecturePage * lecturesPerPage
   );
 
-  // Handle lecture update
+  /**
+   * Update lecture with edited form values
+   * @param event Form submission event
+   */
   const handleLectureUpdate = async (event: React.FormEvent) => {
     event.preventDefault();
     
     try {
-      console.log("Updating lecture with data:", editingLecture);
-      
-      // Convert difficulty to proper case for storage
+      // Normalize difficulty case for consistent storage
       const formattedDifficulty = editingLecture.difficulty?.toLowerCase() === 'easy' ? 'Easy' :
                                 editingLecture.difficulty?.toLowerCase() === 'medium' ? 'Medium' :
                                 editingLecture.difficulty?.toLowerCase() === 'hard' ? 'Hard' :
@@ -125,11 +136,11 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
       const authClient = await getAuthenticatedClient();
       await authClient.models.Lecture.update({
         id: editingLecture.id,
-        courseId: editingLecture.courseId, // Required field
-        lectureId: editingLecture.lectureId, // Required field
+        courseId: editingLecture.courseId,
+        lectureId: editingLecture.lectureId,
         title: editingLecture.title,
         content: editingLecture.content,
-        difficulty: formattedDifficulty, // Use the formatted version
+        difficulty: formattedDifficulty,
         duration: editingLecture.duration,
         summary: editingLecture.summary
       });
@@ -144,10 +155,11 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
         lecture.id === editingLecture.id ? updatedLecture : lecture
       ));
       
-      // Close modal and reset
+      // Reset UI state
       setIsLectureModalOpen(false);
       setEditingLecture(null);
       
+      // Show success feedback
       setActionMessage({ text: 'Lecture updated successfully', type: 'success' });
       setTimeout(() => setActionMessage(null), 3000);
     } catch (error) {
@@ -157,7 +169,10 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
     }
   };
 
-  // Render lecture edit modal
+  /**
+   * Render modal for editing lecture content
+   * Includes form with fields for all editable properties
+   */
   const renderLectureEditModal = () => (
     <CustomModal
       isOpen={isLectureModalOpen}
@@ -171,6 +186,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
         
         {editingLecture && (
           <form onSubmit={handleLectureUpdate}>
+            {/* Basic lecture metadata fields */}
             <TextField
               label="Title"
               name="title"
@@ -200,6 +216,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
               marginBottom="1rem"
             />
             
+            {/* Lecture content fields */}
             <TextAreaField
               label="Summary"
               name="summary"
@@ -218,6 +235,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
               marginBottom="1rem"
             />
             
+            {/* Action buttons */}
             <Flex justifyContent="space-between">
               <Button 
                 variation="link" 
@@ -240,6 +258,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
     <Card className='radius overflow-x-scroll'>
       <Heading level={4} marginBottom="1rem">Lecture Content</Heading>
       
+      {/* Status and error messages */}
       {actionMessage && (
         <Alert 
           className='radius-s'
@@ -252,6 +271,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
         </Alert>
       )}
       
+      {/* Filter and search controls */}
       <Flex justifyContent="space-between" marginBottom="1rem">
         <SelectField
           label="Filter by Course"
@@ -278,6 +298,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
         />
       </Flex>
 
+      {/* Loading, error and empty states */}
       {lectureLoading ? (
         <Flex justifyContent="center" padding="2rem">
           <Loader size="large" />
@@ -288,6 +309,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
         <Alert className='radius-s' variation="info">No lectures found</Alert>
       ) : (
         <>
+          {/* Lectures data table */}
           <Table highlightOnHover>
             <TableHead>
               <TableRow>
@@ -304,6 +326,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
                   <TableCell>{lecture.lectureId}</TableCell>
                   <TableCell>{lecture.title}</TableCell>
                   <TableCell>
+                    {/* Color-coded difficulty indicator */}
                     <Badge
                       variation={
                         lecture.difficulty?.toLowerCase() === 'easy' ? 'info' :
@@ -316,6 +339,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
                   <TableCell>{lecture.duration || 'Not set'}</TableCell>
                   <TableCell>
                     <Flex gap="1rem" alignItems="center">
+                      {/* Edit button */}
                       <Button
                         variation="primary"
                         size="small"
@@ -327,6 +351,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
                         Edit
                       </Button>
                       
+                      {/* Expandable content preview */}
                       <Accordion>
                         <Accordion.Container>
                           <Accordion.Item value="content">
@@ -355,6 +380,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
             </TableBody>
           </Table>
           
+          {/* Pagination controls */}
           <Pagination
             currentPage={lecturePage}
             totalPages={Math.ceil(filteredLecturesData.length / lecturesPerPage)}
@@ -365,7 +391,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({ getAuthenticatedClient }) => 
         </>
       )}
 
-      {/* Add the modal here */}
+      {/* Edit modal */}
       {renderLectureEditModal()}
     </Card>
   );

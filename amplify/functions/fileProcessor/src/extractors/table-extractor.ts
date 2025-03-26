@@ -8,6 +8,7 @@ import { PdfTableOptions } from './types';
  * Extract tables from PDF text content using heuristic pattern recognition
  * @param content Raw text content from PDF
  * @param options Configuration options for table detection
+ * @returns Content with detected tables formatted in markdown
  */
 export function detectTablesInPdfText(
   content: string, 
@@ -38,6 +39,10 @@ export function detectTablesInPdfText(
 
 /**
  * Identify potential table regions in text content
+ * Uses multiple heuristics to find tabular data in plain text
+ * @param lines Array of text lines to analyze
+ * @param options Configuration parameters for detection sensitivity
+ * @returns Array of table regions with start and end line indices
  */
 function findTableRegions(
   lines: string[], 
@@ -133,6 +138,9 @@ function findTableRegions(
 
 /**
  * Format detected table into a standardized structure
+ * Chooses appropriate formatting based on table characteristics
+ * @param tableLines Lines of text representing a table
+ * @returns Formatted table in markdown-compatible format
  */
 function formatTableFromLines(tableLines: string[]): string {
   // Clean up the table lines
@@ -152,6 +160,9 @@ function formatTableFromLines(tableLines: string[]): string {
 
 /**
  * Format a table that uses delimiter characters
+ * Preserves existing delimiters while standardizing format
+ * @param tableLines Lines of text with delimiter characters
+ * @returns Markdown-formatted table
  */
 function formatDelimiterTable(tableLines: string[]): string {
   // Start with table marker
@@ -178,6 +189,9 @@ function formatDelimiterTable(tableLines: string[]): string {
 
 /**
  * Format a table that uses space alignment without explicit delimiters
+ * Analyzes column positions and converts to pipe-delimited format
+ * @param tableLines Lines of text with space-aligned columns
+ * @returns Markdown-formatted table with explicit column delimiters
  */
 function formatSpaceAlignedTable(tableLines: string[]): string {
   // Analyze column positions
@@ -218,6 +232,9 @@ function formatSpaceAlignedTable(tableLines: string[]): string {
 
 /**
  * Detect column positions in a space-aligned table
+ * Uses frequency analysis to find natural column boundaries
+ * @param lines Array of text lines representing a table
+ * @returns Array of character positions where columns begin
  */
 function detectColumnPositions(lines: string[]): number[] {
   // Create a character frequency map to find column boundaries
@@ -265,7 +282,7 @@ function detectColumnPositions(lines: string[]): number[] {
     }
   }
   
-  // Always include start and end positions
+  // Always include start position
   columnPositions.unshift(0);
   
   return columnPositions;
@@ -273,7 +290,9 @@ function detectColumnPositions(lines: string[]): number[] {
 
 /**
  * Extract tables from PDF using more advanced heuristics for scientific documents
- * @param pdfText - Text content extracted from PDF
+ * Specifically targets tables with captions and formal structures
+ * @param pdfText Text content extracted from PDF
+ * @returns Enhanced text with formatted tables
  */
 export function extractScientificPdfTables(pdfText: string): string {
   let enhancedText = pdfText;
@@ -327,10 +346,10 @@ export function extractScientificPdfTables(pdfText: string): string {
   return enhancedText;
 }
 
-// Add PowerPoint table extraction functionality
 /**
  * Extract tables from PowerPoint slide XML
- * @param slideXml - The XML structure of a PowerPoint slide
+ * Navigates complex XML structure to find and format tables
+ * @param slideXml The XML structure of a PowerPoint slide
  * @returns Text representation of tables found in the slide
  */
 export function extractTablesFromPptxSlide(slideXml: any): string {
@@ -456,7 +475,7 @@ export function extractTablesFromPptxSlide(slideXml: any): string {
       }
     }
   } catch (error) {
-    console.log('Error extracting tables from slide:', error);
+    // Log error but continue processing
   }
   
   return tableText;

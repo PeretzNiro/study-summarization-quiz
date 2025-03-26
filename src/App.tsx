@@ -13,24 +13,22 @@ import './components/quiz/Quiz.css';
 import './styles/courses.css';
 import './App.css';
 
-// Navigation wrapper with route-aware navigation
+// Wrapper component that handles navigation state and tab synchronization
 const NavigationWrapper = () => {
   const { signOut } = useAuthenticator();
   const navigate = useNavigate();
-  const location = useLocation(); // Get the current location
+  const location = useLocation();
   
-  // Get the stored active tab or default to 'main'
+  // Initialize active tab from session storage or default to home
   const storedTab = sessionStorage.getItem('activeTab') || 'main';
   const [activeTab, setActiveTab] = useState(storedTab);
   
-  // Use auth context
   const { isAdmin } = useAuth();
   
-  // Update active tab when location changes
+  // Synchronize active tab with current route
   useEffect(() => {
     const path = location.pathname;
     
-    // Map the current path to the appropriate tab
     if (path === '/') {
       setActiveTab('main');
       sessionStorage.setItem('activeTab', 'main');
@@ -43,7 +41,7 @@ const NavigationWrapper = () => {
     }
   }, [location.pathname]);
   
-  // Save active tab when it changes
+  // Handle tab selection and navigation
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     sessionStorage.setItem('activeTab', tab);
@@ -58,8 +56,6 @@ const NavigationWrapper = () => {
       case 'admin':
         if (isAdmin) {
           navigate('/admin');
-        } else {
-          console.warn('Access denied: User is not an admin');
         }
         break;
       default:
@@ -73,22 +69,23 @@ const NavigationWrapper = () => {
       setActiveTab={handleTabChange} 
       onSignOut={signOut} 
       className="navigation"
-      showAdminTab={isAdmin} // Just use isAdmin directly
+      showAdminTab={isAdmin}
     />
   );
 };
 
+// Main application content with routing configuration
 function AppContent() {
   const navigate = useNavigate();
   const { displayName } = useAuth();
   
+  // Dashboard/homepage component with navigation cards
   const renderHomePage = () => (
     <>
       <h1 className="row_padding">
         Hi{displayName ? `, ${displayName}` : ''}<span className="bold_icon"> 👋</span>
       </h1>
       <div className="box_container">
-        {/* Make entire box wrapper clickable */}
         <div 
           className="box_wrapper clickable"
           onClick={() => navigate('/courses')}
@@ -97,7 +94,6 @@ function AppContent() {
           <p>Browse through our catalog of courses</p>
         </div>
         
-        {/* Make entire box wrapper clickable */}
         <div 
           className="box_wrapper clickable"
           onClick={() => navigate('/courses')}
@@ -134,12 +130,11 @@ function AppContent() {
           <Route path="/courses/:courseId/lectures/:lectureId" element={<LectureDetailPage />} />
           <Route path="/courses/:courseId/lectures/:lectureId/quiz" element={<QuizPage />} />
           
-          {/* Protected Admin Routes */}
+          {/* Admin route with authorization protection */}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminPage />} />
           </Route>
           
-          {/* Catch-all route for unmatched paths */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -147,6 +142,7 @@ function AppContent() {
   );
 }
 
+// Root component that configures authentication and routing
 function App() {
   return (
     <Router>

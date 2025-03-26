@@ -14,7 +14,12 @@ import { Autocomplete } from '../common/Autocomplete';
 import { CustomModal } from '../modal/CustomModal';
 import './FileUploader.css';
 
+/**
+ * File upload component for course materials
+ * Handles uploading PDF and PowerPoint files to S3 with folder organization
+ */
 const FileUpload: React.FC = () => {
+  // State for managing upload status and UI feedback
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [folderName, setFolderName] = useState<string>('');
   const [, setCurrentPath] = useState<string>('');
@@ -24,23 +29,23 @@ const FileUpload: React.FC = () => {
   const [availableFolders, setAvailableFolders] = useState<string[]>([]);
   const [isLoadingFolders, setIsLoadingFolders] = useState<boolean>(false);
   
-  // For duplicate file handling
+  // State for duplicate file handling
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateFileName, setDuplicateFileName] = useState('');
   const [pendingFileUpload, setPendingFileUpload] = useState<any>(null);
-  
-  // New state to disable the uploader when checking for duplicates
   const [isUploaderDisabled, setIsUploaderDisabled] = useState<boolean>(false);
   
-  // Ref to the hidden file input for custom file selection
+  // Reference to hidden file input for custom styling
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load available folders on component mount
+  // Load available folders when component mounts
   useEffect(() => {
     loadFolders();
   }, []);
   
-  // Load folders from S3
+  /**
+   * Fetch list of existing folders from S3 storage
+   */
   const loadFolders = async () => {
     setIsLoadingFolders(true);
     try {
@@ -53,38 +58,46 @@ const FileUpload: React.FC = () => {
     }
   };
 
-  // Handle folder name change (manual input)
+  /**
+   * Handle folder name input changes with validation
+   */
   const handleFolderNameChange = (value: string) => {
-    // Remove any slashes to avoid creating nested folders unintentionally
+    // Remove slashes to prevent nested folder creation
     setFolderName(value.replace(/[/\\]/g, ''));
   };
 
-  // Handle folder selection from autocomplete
+  /**
+   * Handle folder selection from autocomplete dropdown
+   */
   const handleFolderSelect = (selected: string) => {
     setFolderName(selected);
   };
 
-  // Set up the upload path when the user confirms the folder
+  /**
+   * Set up the upload environment after folder selection
+   */
   const handlePrepareUpload = async () => {
     if (!folderName.trim()) {
       setUploadStatus('Please enter a folder name');
       return;
     }
     
-    // Use the folder name directly without prefix
+    // Format the path for S3 folder structure
     const formattedPath = `${folderName.trim()}/`;
     setCurrentPath(formattedPath);
     setShowUploader(true);
     setUploadStatus('');
     setUploadResults([]);
     
-    // If this is a new folder, add it to the list
+    // Add new folders to the available folders list
     if (!availableFolders.includes(folderName.trim())) {
       setAvailableFolders(prev => [...prev, folderName.trim()]);
     }
   };
 
-  // Reset the uploader
+  /**
+   * Reset the uploader to initial state
+   */
   const handleReset = () => {
     setFolderName('');
     setCurrentPath('');
@@ -96,22 +109,24 @@ const FileUpload: React.FC = () => {
     setIsUploaderDisabled(false);
   };
   
-  // Custom function to handle file selection before upload
+  /**
+   * Process file selection and check for duplicates before upload
+   */
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0]; // Get just the first file for simplicity
+      const file = e.target.files[0]; 
       const originalFileName = file.name;
       const sanitizedFileName = sanitizeFileName(originalFileName);
       
       try {
-        // Disable the uploader to prevent other uploads
+        // Prevent additional file selection during processing
         setIsUploaderDisabled(true);
         
-        // Check if file exists with the sanitized name
+        // Check if file with same name exists in the folder
         const fileExists = await StorageService.checkFileExists(folderName, sanitizedFileName);
         
         if (fileExists) {
-          // Store file info for later use with sanitized name
+          // Store file info for potential replacement
           const fileToUpload = new File([file], sanitizedFileName, { type: file.type });
           setPendingFileUpload({
             file: fileToUpload, 
@@ -121,7 +136,7 @@ const FileUpload: React.FC = () => {
           setDuplicateFileName(sanitizedFileName);
           setShowDuplicateModal(true);
           
-          // Reset file input
+          // Reset file input for next selection
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
@@ -129,7 +144,7 @@ const FileUpload: React.FC = () => {
           return;
         }
         
-        // If no duplicate, upload directly
+        // If no duplicate, proceed with upload
         await handleDirectUpload(file);
       } catch (error) {
         console.error('Error checking for duplicate file:', error);
@@ -144,28 +159,30 @@ const FileUpload: React.FC = () => {
     }
   };
   
-  // Handle direct file upload
+  /**
+   * Upload a file to S3 with proper error handling
+   */
   const handleDirectUpload = async (file: File) => {
     setIsUploading(true);
     setUploadStatus('Uploading...');
     
     try {
-      // Sanitize the file name
+      // Sanitize the filename for S3 compatibility
       const originalFileName = file.name;
       const sanitizedFileName = sanitizeFileName(originalFileName);
       
-      // Create a new file with the sanitized name if needed
+      // Create a new file with sanitized name if needed
       let fileToUpload = file;
       let displayFileName = originalFileName;
       
       if (sanitizedFileName !== originalFileName) {
-        // Create a new File object with the sanitized name
         fileToUpload = new File([file], sanitizedFileName, { type: file.type });
         displayFileName = `${originalFileName} (uploaded as ${sanitizedFileName})`;
       }
       
       const filePath = `${folderName}/${sanitizedFileName}`;
       
+      // Upload to S3 with protected access level
       await uploadData({
         key: filePath,
         data: fileToUpload,
@@ -174,7 +191,7 @@ const FileUpload: React.FC = () => {
         }
       });
       
-      // Show success message and add to results
+      // Update UI with success status
       setUploadStatus('Upload successful!');
       setUploadResults(prev => [
         ...prev, 
@@ -185,7 +202,7 @@ const FileUpload: React.FC = () => {
         }
       ]);
     } catch (error: unknown) {
-      // Error handling remains the same
+      // Handle upload failures
       console.error('Error uploading file:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
@@ -203,7 +220,9 @@ const FileUpload: React.FC = () => {
     }
   };
   
-  // Confirm replacing the file
+  /**
+   * Replace an existing file when confirmed by user
+   */
   const handleReplaceFile = async () => {
     setShowDuplicateModal(false);
     
@@ -217,10 +236,10 @@ const FileUpload: React.FC = () => {
         
         setUploadStatus('Replacing file...');
         
-        // Delete existing file
+        // Delete the existing file first
         await StorageService.deleteFile(filePath);
         
-        // Now upload the new file directly
+        // Upload the new version
         await uploadData({
           key: filePath,
           data: pendingFileUpload.file,
@@ -229,7 +248,7 @@ const FileUpload: React.FC = () => {
           }
         });
         
-        // Show success message and add to results
+        // Update UI with success status
         setUploadStatus('File replaced successfully!');
         setUploadResults(prev => [
           ...prev, 
@@ -240,11 +259,11 @@ const FileUpload: React.FC = () => {
           }
         ]);
       } catch (error: unknown) {
+        // Handle replacement failures
         console.error('Error replacing file:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         setUploadStatus('Failed to replace file: ' + errorMessage);
         
-        // Add to error results
         setUploadResults(prev => [
           ...prev, 
           {
@@ -259,20 +278,24 @@ const FileUpload: React.FC = () => {
     }
   };
   
-  // Cancel replacing the file
+  /**
+   * Cancel file replacement action
+   */
   const handleCancelReplace = () => {
     setShowDuplicateModal(false);
     setUploadStatus('Upload canceled for duplicate file.');
     setPendingFileUpload(null);
   };
 
-  // Add this function to your component
+  /**
+   * Sanitize filenames for S3 compatibility
+   * Replaces spaces and special characters with safe alternatives
+   */
   const sanitizeFileName = (fileName: string): string => {
-    // Replace spaces with underscores and remove any special characters
     return fileName
       .replace(/\s+/g, '_')                 // Replace spaces with underscores
-      .replace(/[^a-zA-Z0-9._-]/g, '')      // Remove special characters except dots, underscores, and hyphens
-      .replace(/_{2,}/g, '_');              // Replace multiple consecutive underscores with a single one
+      .replace(/[^a-zA-Z0-9._-]/g, '')      // Remove special characters
+      .replace(/_{2,}/g, '_');              // Remove duplicate underscores
   };
 
   return (
@@ -285,6 +308,7 @@ const FileUpload: React.FC = () => {
         
         <Divider marginTop="1rem" marginBottom="1rem" />
         
+        {/* Folder selection phase */}
         {!showUploader ? (
           <>
             <Autocomplete
@@ -307,11 +331,12 @@ const FileUpload: React.FC = () => {
           </>
         ) : (
           <>
+            {/* File upload phase */}
             <Alert className='radius-s' variation="info" marginBottom="1rem">
               Files will be uploaded to folder: <strong>{folderName}</strong>
             </Alert>
             
-            {/* Hidden file input for custom file selection */}
+            {/* Hidden native file input */}
             <input
               type="file"
               ref={fileInputRef}
@@ -320,7 +345,7 @@ const FileUpload: React.FC = () => {
               accept=".pdf,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
             />
             
-            {/* Custom upload button */}
+            {/* Custom styled upload button */}
             <Button
               onClick={() => fileInputRef.current?.click()}
               variation="primary"
@@ -332,12 +357,14 @@ const FileUpload: React.FC = () => {
               {isUploading ? 'Uploading...' : 'Select File to Upload'}
             </Button>
 
+            {/* Upload progress indicator */}
             {isUploading && (
               <Alert className='radius-s' variation="info" marginBottom="1rem">
                 Uploading... Please wait.
               </Alert>
             )}
             
+            {/* Results display section */}
             {uploadResults.length > 0 && (
               <div className="upload-results">
                 <Heading level={5} marginTop="1.5rem" marginBottom="0.5rem">Upload Results:</Heading>
@@ -355,6 +382,7 @@ const FileUpload: React.FC = () => {
               </div>
             )}
             
+            {/* Action buttons */}
             <Flex justifyContent="space-between" marginTop="1.5rem">
               <Button onClick={handleReset} variation="link" isDisabled={isUploading}>
                 Change Folder
@@ -369,6 +397,7 @@ const FileUpload: React.FC = () => {
         )}
       </Card>
       
+      {/* Status message display */}
       {uploadStatus && !showUploader && (
         <Alert 
           className='radius-s'
@@ -380,7 +409,7 @@ const FileUpload: React.FC = () => {
         </Alert>
       )}
       
-      {/* File duplicate confirmation modal */}
+      {/* Duplicate file confirmation modal */}
       <CustomModal isOpen={showDuplicateModal} onClose={handleCancelReplace}>
         <Heading level={3} padding="1rem 1.5rem" style={{ borderBottom: "1px solid #e0e0e0" }}>
           File Already Exists

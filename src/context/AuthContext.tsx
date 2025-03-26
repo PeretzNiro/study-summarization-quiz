@@ -2,17 +2,21 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { fetchUserAttributes, fetchAuthSession } from 'aws-amplify/auth';
 
+/**
+ * Type definition for the authentication context
+ */
 interface AuthContextType {
-  isAdmin: boolean;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  username: string;
-  displayName: string;
-  signOut: () => void;
-  checkUserRole: () => Promise<void>;
-  getAuthToken: () => Promise<string | undefined>;
+  isAdmin: boolean;           // Whether the current user has admin privileges
+  isAuthenticated: boolean;   // Whether the user is currently authenticated
+  isLoading: boolean;         // Whether authentication data is being loaded
+  username: string;           // User's email or username
+  displayName: string;        // Formatted display name for UI
+  signOut: () => void;        // Function to sign the user out
+  checkUserRole: () => Promise<void>; // Function to refresh the user's role
+  getAuthToken: () => Promise<string | undefined>; // Function to retrieve the auth token
 }
 
+// Create context with default values
 const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   isAuthenticated: false,
@@ -24,6 +28,10 @@ const AuthContext = createContext<AuthContextType>({
   getAuthToken: async () => undefined
 });
 
+/**
+ * Authentication provider component that manages user state
+ * and provides authentication context to child components
+ */
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { authStatus, user, signOut } = useAuthenticator((context) => [
     context.authStatus, 
@@ -31,18 +39,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     context.signOut
   ]);
   
-  // Get initial values from sessionStorage to prevent UI flicker
+  // Get initial values from sessionStorage to prevent UI flicker during page refresh
   const storedIsAdmin = sessionStorage.getItem('isAdmin') === 'true';
   const storedUsername = sessionStorage.getItem('username') || '';
   const storedDisplayName = sessionStorage.getItem('displayName') || '';
 
-  // Initialize with stored values to prevent UI flicker
+  // Initialize state with stored values
   const [isAdmin, setIsAdmin] = useState<boolean>(storedIsAdmin);
   const [isLoading, setIsLoading] = useState<boolean>(!storedIsAdmin && authStatus === 'authenticated');
   const [username, setUsername] = useState<string>(storedUsername);
   const [displayName, setDisplayName] = useState<string>(storedDisplayName);
 
-  // Method to check user role
+  /**
+   * Checks the user's role and updates authentication state
+   * Gets called on login, logout, and authentication state changes
+   */
   const checkUserRole = async () => {
     if (authStatus !== 'authenticated' || !user) {
       // Clear stored values when not authenticated
@@ -64,7 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userAttributes = await fetchUserAttributes();
       const email = userAttributes.email || user.username || '';
       
-      // Format display name
+      // Format display name from email (capitalize first letter of username part)
       const rawName = email.split('@')[0] || '';
       if (rawName) {
         const formatted = rawName.charAt(0).toUpperCase() + rawName.slice(1);
@@ -77,7 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem('username', email);
       sessionStorage.setItem('currentUser', email);
       
-      // Check for admin status in the token
+      // Check for admin status in the token's cognito groups
       const session = await fetchAuthSession();
       const groups = session.tokens?.accessToken?.payload['cognito:groups'] as string[] || [];
       const userIsAdmin = groups.includes('Admins');
@@ -94,7 +105,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Method to get auth token (useful for authenticated API calls)
+  /**
+   * Retrieves the current authentication token for API calls
+   * @returns The ID token or undefined if not authenticated
+   */
   const getAuthToken = async (): Promise<string | undefined> => {
     try {
       const { tokens } = await fetchAuthSession();
@@ -105,6 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Check user role whenever authentication status changes
   useEffect(() => {
     checkUserRole();
   }, [authStatus, user]);
@@ -125,4 +140,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+/**
+ * Custom hook for accessing authentication context
+ * @returns Authentication context value
+ */
 export const useAuth = () => useContext(AuthContext);

@@ -3,23 +3,27 @@ import { TextField } from '@aws-amplify/ui-react';
 import './Autocomplete.css';
 
 export interface AutocompleteProps {
-  options: string[];
-  value: string;
-  onChange: (value: string) => void;
-  onSelect: (value: string) => void;
-  placeholder?: string;
-  label?: string;
-  disabled?: boolean;
-  required?: boolean;
-  descriptiveText?: string;
-  errorMessage?: string;
-  className?: string;
-  loadingState?: boolean;
-  isLoading?: boolean;
-  isRequired?: boolean;
-  name?: string;
+  options: string[];               // Array of available options to choose from
+  value: string;                   // Current input value (controlled component)
+  onChange: (value: string) => void; // Handler for text input changes
+  onSelect: (value: string) => void; // Handler for when an option is selected
+  placeholder?: string;            // Placeholder text for empty input
+  label?: string;                  // Label text for the field
+  disabled?: boolean;              // Whether the component is disabled
+  required?: boolean;              // Whether the field is required
+  descriptiveText?: string;        // Helper text displayed below the field
+  errorMessage?: string;           // Error message when validation fails
+  className?: string;              // Additional CSS classes
+  loadingState?: boolean;          // Whether the component is in loading state
+  isLoading?: boolean;             // Alternative loading state prop (for consistency)
+  isRequired?: boolean;            // Alternative required prop (for consistency)
+  name?: string;                   // Field name for form submission
 }
 
+/**
+ * Autocomplete component that provides suggestions as the user types
+ * Supports keyboard navigation, custom styling, and form validation
+ */
 export const Autocomplete: React.FC<AutocompleteProps> = ({
   options,
   value,
@@ -64,11 +68,13 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
     };
   }, [wrapperRef]);
 
+  // Update parent component with input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);
     setShowSuggestions(true);
   };
 
+  // Pass selected option to parent and close dropdown
   const handleSelectOption = (option: string) => {
     onSelect(option);
     setShowSuggestions(false);
@@ -89,6 +95,7 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
         descriptiveText={descriptiveText}
       />
       
+      {/* Suggestion dropdown - only shown when input is focused and options exist */}
       {showSuggestions && filteredOptions.length > 0 && (
         <div className="suggestions-container">
           {filteredOptions.map((option, index) => (
@@ -103,6 +110,7 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
         </div>
       )}
       
+      {/* No results message - shown when input has value but no matches found */}
       {showSuggestions && filteredOptions.length === 0 && value && (
         <div className="suggestions-container">
           <div className="suggestion-item no-results">

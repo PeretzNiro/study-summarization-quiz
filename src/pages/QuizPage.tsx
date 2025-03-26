@@ -5,17 +5,30 @@ import { generateClient } from 'aws-amplify/data';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import type { Schema } from '../../amplify/data/resource';
 
+// Initialize Amplify Data API client
 const client = generateClient<Schema>();
 
+/**
+ * Page component for displaying and taking quizzes
+ * Handles quiz submission and progress tracking
+ */
 const QuizPage: React.FC = () => {
+  // Get current authenticated user
   const { user } = useAuthenticator((context) => [context.user]);
+  
+  // Extract course and lecture IDs from URL parameters
   const { courseId, lectureId } = useParams<{ courseId: string; lectureId: string }>();
   
+  /**
+   * Persists quiz results to UserProgress table
+   * @param score - Percentage score achieved (0-100)
+   * @param quizId - Identifier of the completed quiz
+   */
   const handleQuizSubmission = async (score: number, quizId: string) => {
     if (!user || !courseId || !quizId) return;
     
     try {
-      // Find existing progress
+      // Find existing progress record for this user and course
       const { data: existingProgress } = await client.models.UserProgress.list({
         filter: { 
           userId: { eq: user.username },
@@ -26,8 +39,10 @@ const QuizPage: React.FC = () => {
       const now = new Date().toISOString();
       
       if (existingProgress && existingProgress.length > 0) {
-        // Update existing record with quiz score
+        // Update existing record with new quiz score
         const currentProgress = existingProgress[0];
+        
+        // Safely merge existing quiz scores with the new score
         const updatedQuizScores = {
           ...(typeof currentProgress.quizScores === 'object' && currentProgress.quizScores !== null ? currentProgress.quizScores : {}),
           [quizId]: score
@@ -39,7 +54,7 @@ const QuizPage: React.FC = () => {
           lastAccessed: now
         });
       } else {
-        // Create new progress record with quiz score
+        // Create new progress record with initial quiz score
         await client.models.UserProgress.create({
           userId: user.username,
           courseId: courseId,
@@ -54,6 +69,7 @@ const QuizPage: React.FC = () => {
     }
   };
   
+  // Render error state if required parameters are missing
   if (!courseId || !lectureId) {
     return (
       <div className="error-container">
@@ -76,6 +92,7 @@ const QuizPage: React.FC = () => {
         <h1>Quiz Assessment</h1>
       </div>
       
+      {/* Quiz renderer component with submission handler */}
       <QuizContainer 
         courseId={courseId} 
         lectureId={lectureId} 

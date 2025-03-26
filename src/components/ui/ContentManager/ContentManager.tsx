@@ -9,12 +9,20 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 import type { Schema } from '../../../types/Schema';
 import './ContentManager.css';
 
+/**
+ * Content Manager component providing administrative interface
+ * for managing course materials, quizzes, and content uploads
+ */
 const ContentManager: React.FC = () => {
+  // Core state for shared data across tabs
   const [courses, setCourses] = useState<any[]>([]);
   const [lectures, setLectures] = useState<any[]>([]);
-  const [courseFilter, setCourseFilter] = useState<string>('');  // Change from string|null to string
+  const [courseFilter, setCourseFilter] = useState<string>('');
   
-  // Get authenticated client
+  /**
+   * Create an authenticated GraphQL client with user's session token
+   * Used for all database operations across content management tabs
+   */
   const getAuthenticatedClient = async () => {
     try {
       const { tokens } = await fetchAuthSession();
@@ -32,12 +40,10 @@ const ContentManager: React.FC = () => {
     }
   };
 
-  // Fetch all courses
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-  
-  // Fetch lectures (can be called from PendingUploadsTab to refresh)
+  /**
+   * Fetch all approved lectures from the database
+   * Can be called from PendingUploadsTab after approving new content
+   */
   const fetchLectures = async () => {
     try {
       const authClient = await getAuthenticatedClient();
@@ -55,7 +61,10 @@ const ContentManager: React.FC = () => {
     }
   };
   
-  // Add fetchCourses function
+  /**
+   * Fetch all courses from the database
+   * Used for populating course selection dropdowns
+   */
   const fetchCourses = async () => {
     try {
       const authClient = await getAuthenticatedClient();
@@ -69,8 +78,9 @@ const ContentManager: React.FC = () => {
     }
   };
   
-  // Fetch lectures when component mounts
+  // Initialize data when component mounts
   useEffect(() => {
+    fetchCourses();
     fetchLectures();
   }, []);
 

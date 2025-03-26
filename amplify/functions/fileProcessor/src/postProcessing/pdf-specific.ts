@@ -8,7 +8,11 @@ import { cleanPipeArtifacts } from './tables';
 import { fixMathNotation, cleanRepeatedPunctuation, enhanceMathematicalContent } from './math';
 
 /**
- * Cleans PDF-specific artifacts
+ * Cleans PDF-specific artifacts that occur during text extraction
+ * Applies a series of targeted transformations to improve content readability
+ * @param content Raw extracted PDF text
+ * @param metadata Optional metadata about the document
+ * @returns Cleaned and normalized PDF content
  */
 export function cleanPdfContent(content: string, metadata: any = {}): string {
   let result = content;

@@ -22,7 +22,12 @@ import { CourseService } from '../../../services/CourseService';
 
 const client = generateClient<Schema>();
 
+/**
+ * Course management form that handles creation and updates of courses
+ * Includes autocomplete functionality and validation for existing courses
+ */
 const CourseForm: React.FC = () => {
+  // Form state for course data
   const [formData, setFormData] = useState({
     courseId: '',
     title: '',
@@ -30,25 +35,29 @@ const CourseForm: React.FC = () => {
     difficulty: '' 
   });
   
+  // UI state management
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [showResult, setShowResult] = useState(false);
   
-  // For handling the confirmation modal
+  // Modal state for confirming course updates
   const [showModal, setShowModal] = useState(false);
   const [existingCourse, setExistingCourse] = useState<any>(null);
   
-  // For autocomplete functionality
+  // Autocomplete functionality state
   const [courseIds, setCourseIds] = useState<string[]>([]);
   const [isLoadingCourseIds, setIsLoadingCourseIds] = useState(false);
   
-  // Load all course IDs on component mount
+  // Load all course IDs when component mounts
   useEffect(() => {
     loadCourseIds();
   }, []);
   
+  /**
+   * Fetch all course IDs for autocomplete functionality
+   */
   const loadCourseIds = async () => {
     setIsLoadingCourseIds(true);
     try {
@@ -61,16 +70,19 @@ const CourseForm: React.FC = () => {
     }
   };
   
+  /**
+   * Handle selection of a course ID from autocomplete
+   * Pre-fills form with existing course data if available
+   */
   const handleAutocompleteSelect = async (courseId: string) => {
     setFormData({ ...formData, courseId });
     
-    // When a course ID is selected, fetch details but don't show modal
     if (courseId) {
       setIsChecking(true);
       try {
         const course = await CourseService.getCourseById(courseId);
         if (course) {
-          // Pre-fill the form with existing values
+          // Pre-fill form with existing values
           setFormData({
             courseId: course.courseId,
             title: course.title || '',
@@ -78,25 +90,24 @@ const CourseForm: React.FC = () => {
             difficulty: course.difficulty || 'easy'
           });
           
-          // Store existing course data but don't show modal yet
           setExistingCourse(course);
         } else {
-          // Clear existing course data if no course found
           setExistingCourse(null);
         }
       } catch (err) {
         console.error('Error fetching course details:', err);
-        // Clear existing course data on error
         setExistingCourse(null);
       } finally {
         setIsChecking(false);
       }
     } else {
-      // Reset existing course data when no courseId is selected
       setExistingCourse(null);
     }
   };
   
+  /**
+   * Update form state for all form elements except course ID
+   */
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({
@@ -104,26 +115,31 @@ const CourseForm: React.FC = () => {
       [name]: value
     });
     
-    // Reset result state when form is being edited
+    // Reset result display when form is modified
     if (showResult) {
       setShowResult(false);
       setUploadResult(null);
     }
   };
   
+  /**
+   * Update course ID field and reset result display
+   */
   const handleCourseIdChange = (value: string) => {
     setFormData({
       ...formData,
       courseId: value
     });
     
-    // Reset result state when form is being edited
     if (showResult) {
       setShowResult(false);
       setUploadResult(null);
     }
   };
   
+  /**
+   * Check if a course with the given ID already exists in the database
+   */
   const checkIfCourseExists = async (courseId: string) => {
     setIsChecking(true);
     try {
@@ -131,10 +147,7 @@ const CourseForm: React.FC = () => {
         filter: { courseId: { eq: courseId } }
       });
       
-      if (courses && courses.length > 0) {
-        return courses[0];
-      }
-      return null;
+      return courses && courses.length > 0 ? courses[0] : null;
     } catch (err) {
       console.error("Error checking if course exists:", err);
       throw err;
@@ -143,6 +156,10 @@ const CourseForm: React.FC = () => {
     }
   };
   
+  /**
+   * Handle form submission
+   * Validates course existence and either creates new course or prompts for update
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -185,22 +202,25 @@ const CourseForm: React.FC = () => {
     }
   };
   
+  /**
+   * Update an existing course with new form data
+   * Called when user confirms update in modal
+   */
   const handleUpdateExisting = async () => {
     setIsLoading(true);
     setShowModal(false);
     
     try {
-      // Make sure we have the required data
+      // Validate required data
       if (!existingCourse || !existingCourse.id) {
         throw new Error("Cannot update course: missing course data");
       }
       
-      // Make sure we have at least some data to update
       if (!formData.title && !formData.description && !formData.difficulty) {
         throw new Error("Please provide at least one field to update");
       }
       
-      // Prepare update data - only include fields that have values
+      // Only include fields with values in update operation
       const updateData: any = {
         id: existingCourse.id,
       };
@@ -209,8 +229,7 @@ const CourseForm: React.FC = () => {
       if (formData.description) updateData.description = formData.description;
       if (formData.difficulty) updateData.difficulty = formData.difficulty;
       
-  
-      // Update the existing course with new data
+      // Update the existing course
       const updateResult = await client.models.Course.update(updateData);
             
       setUploadResult({
@@ -242,6 +261,9 @@ const CourseForm: React.FC = () => {
     }
   };
   
+  /**
+   * Reset form to initial state
+   */
   const handleReset = () => {
     setFormData({
       courseId: '',
@@ -262,6 +284,7 @@ const CourseForm: React.FC = () => {
         <Text>Fill in the course details to add a new course to the database</Text>
         
         <form onSubmit={handleSubmit}>
+          {/* Course ID field with autocomplete */}
           <Autocomplete
             label="Course ID"
             placeholder="e.g., COMP-1811"
@@ -276,6 +299,7 @@ const CourseForm: React.FC = () => {
             className="margin-top-1"
           />
           
+          {/* Course metadata fields */}
           <TextField
             label="Course Title"
             name="title"
@@ -307,10 +331,12 @@ const CourseForm: React.FC = () => {
             <option value="hard">Hard</option>
           </SelectField>
           
+          {/* Error display */}
           {error && (
             <Alert className='radius-s' variation="error" marginTop="1rem">{error}</Alert>
           )}
           
+          {/* Operation result display */}
           {showResult && uploadResult && (
             <>
               <Divider marginTop="1.5rem" marginBottom="1rem" />
@@ -326,6 +352,7 @@ const CourseForm: React.FC = () => {
             </>
           )}
           
+          {/* Action buttons */}
           <Flex justifyContent="space-between" marginTop="1.5rem">
             <Button 
               type="button" 
@@ -347,6 +374,7 @@ const CourseForm: React.FC = () => {
           </Flex>
         </form>
         
+        {/* Loading indicator */}
         {isLoading && (
           <Flex direction="column" alignItems="center" marginTop="1rem">
             <Loader size="large" />
@@ -355,7 +383,7 @@ const CourseForm: React.FC = () => {
         )}
       </Card>
       
-      {/* Confirmation Modal */}
+      {/* Confirmation modal for updating existing courses */}
       <CustomModal isOpen={showModal} onClose={() => setShowModal(false)}>
         <Heading level={3} padding="1rem 1.5rem" style={{ borderBottom: "1px solid #e0e0e0" }}>
           Course Already Exists

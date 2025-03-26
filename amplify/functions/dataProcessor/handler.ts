@@ -6,6 +6,9 @@ import { v4 as uuidv4 } from 'uuid';
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const lambda = new AWS.Lambda();
 
+/**
+ * Structure of a lecture item in DynamoDB
+ */
 interface LectureItem {
   id?: string;
   courseId: string;
@@ -23,24 +26,30 @@ interface LectureItem {
   status?: string;
 }
 
-// This is triggered by DynamoDB Stream when status changes to approved
+/**
+ * Lambda handler that processes lecture data and manages workflow state
+ * Supports multiple trigger types:
+ * 1. DynamoDB stream events for status change detection
+ * 2. Direct invocation from FileProcessor with lecture content
+ * 3. Status update operations from admin UI
+ */
 export const handler: Handler = async (event: any): Promise<any> => {
   try {
     console.log('Event:', JSON.stringify(event, null, 2));
     
-    // If this is a DynamoDB stream event
+    // Handle DynamoDB Stream events (triggered when lecture status changes)
     if (event.Records && Array.isArray(event.Records)) {
       for (const record of event.Records) {
         if (record.eventName === 'MODIFY') {
-          // Extract the new and old images
+          // Convert DynamoDB format to regular JavaScript objects
           const newImage = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.NewImage);
           const oldImage = AWS.DynamoDB.Converter.unmarshall(record.dynamodb.OldImage);
           
-          // Check if status changed to approved
+          // Detect status transitions to 'approved'
           if (oldImage.status !== 'approved' && newImage.status === 'approved') {
             console.log(`Status changed to approved for lecture ${newImage.id}`);
             
-            // Include title in the payload
+            // Trigger AI summarization when approved
             await invokeSummarization({
               id: newImage.id,
               courseId: newImage.courseId,
@@ -54,10 +63,10 @@ export const handler: Handler = async (event: any): Promise<any> => {
       return { statusCode: 200, body: JSON.stringify({ message: 'Processed stream events' }) };
     }
     
-    // Extract data from event
+    // Extract data from event payload
     const { id, courseId, lectureId, title, content, fileName, fileType, difficulty, status } = event;
     
-    // Get reference to table
+    // Get reference to DynamoDB table from environment
     const tableName = process.env.LECTURE_TABLE_NAME;
     if (!tableName) {
       throw new Error('LECTURE_TABLE_NAME environment variable not set');
@@ -65,14 +74,14 @@ export const handler: Handler = async (event: any): Promise<any> => {
     
     console.log(`Writing to DynamoDB table: ${tableName}`);
     
-    // Check if this is a status update operation from the UI
+    // Special case: Handle status update operations from admin UI
     const isStatusUpdate = event.statusUpdate === true && event.id;
 
     if (isStatusUpdate) {
       try {
         console.log('Processing status update:', event);
         
-        // Get the existing lecture
+        // Retrieve existing lecture record
         const getResult = await dynamodb.get({
           TableName: tableName,
           Key: { id: event.id }
@@ -84,11 +93,11 @@ export const handler: Handler = async (event: any): Promise<any> => {
         
         console.log('Found lecture:', getResult.Item);
         
-        // If status changed to approved, trigger summarization
+        // Check if this status update transitions to 'approved'
         if (getResult.Item.status !== 'approved' && event.status === 'approved') {
           console.log('Status changed to approved, triggering summarization');
           
-          // Invoke summarization Lambda
+          // Start AI processing pipeline
           await invokeSummarization({
             id: event.id,
             courseId: getResult.Item.courseId,
@@ -118,7 +127,7 @@ export const handler: Handler = async (event: any): Promise<any> => {
       }
     }
     
-    // Check for existing items to avoid duplicates
+    // Check for existing lecture entries to avoid duplicates
     let existingItems: string | any[] = [];
     try {
       const response = await dynamodb.scan({
@@ -139,12 +148,13 @@ export const handler: Handler = async (event: any): Promise<any> => {
     // Get current timestamp in ISO format
     const now = new Date().toISOString();
     
-    // Prepare item data, merging with existing if needed
+    // Prepare item data, merging with existing if found
     const existingItem = existingItems.length > 0 ? existingItems[0] : {};
     
     // Use existing ID if found, or provided ID, or generate new ID
     const itemId = id || (existingItems.length > 0 ? existingItem.id : uuidv4());
 
+    // Create or update the lecture record
     const item: LectureItem = {
       id: itemId,
       courseId,
@@ -157,7 +167,7 @@ export const handler: Handler = async (event: any): Promise<any> => {
       __typename: 'Lecture',
       difficulty: difficulty || existingItem.difficulty || 'Medium',
       duration: existingItem.duration || '30 minutes',
-      // Set status to pending_review if not explicitly approved
+      // Default to 'pending_review' unless explicitly approved
       status: status || 'pending_review',
       updatedAt: now,
       createdAt: existingItems.length > 0 && existingItem.createdAt 
@@ -174,9 +184,9 @@ export const handler: Handler = async (event: any): Promise<any> => {
       
       console.log(`DynamoDB put_item response:`, response);
       
-      // Only invoke summarization if the item is approved
+      // Only start summarization immediately if already approved
       if (item.status === 'approved') {
-        if (item.id) { // Make sure id is defined
+        if (item.id) {
           await invokeSummarization({
             id: item.id,
             courseId: item.courseId,
@@ -216,6 +226,10 @@ export const handler: Handler = async (event: any): Promise<any> => {
   }
 };
 
+/**
+ * Invokes the summarization Lambda function to process lecture content
+ * @param params Lecture data required for summarization
+ */
 async function invokeSummarization(params: {
   id: string;
   courseId: string;
@@ -233,9 +247,10 @@ async function invokeSummarization(params: {
   console.log(`Invoking summarization function: ${summarizationFunction}`);
   
   try {
+    // Use Event invocation type for asynchronous processing
     const response = await lambda.invoke({
       FunctionName: summarizationFunction,
-      InvocationType: 'Event',
+      InvocationType: 'Event',  // Async call that doesn't wait for completion
       Payload: JSON.stringify(params)
     }).promise();
     

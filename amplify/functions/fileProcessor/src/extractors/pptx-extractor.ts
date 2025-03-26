@@ -12,11 +12,9 @@ import { extractTablesFromPptxSlide } from './table-extractor';
 /**
  * Extracts text content from PPTX files using JSZip and XML parsing
  * @param pptxBuffer - Buffer containing PPTX data
+ * @returns Structured data with extracted content and metadata
  */
 export async function extractPptxContent(pptxBuffer: Buffer): Promise<ExtractedData> {
-  console.log('Extracting content from PPTX...');
-  const startTime = Date.now();
-  
   try {
     // PPTX files are essentially ZIP files containing XML
     const zip = await JSZip.loadAsync(pptxBuffer);
@@ -31,8 +29,6 @@ export async function extractPptxContent(pptxBuffer: Buffer): Promise<ExtractedD
         const numB = parseInt(b.replace(slidesFolder + 'slide', '').replace('.xml', ''));
         return numA - numB;
       });
-    
-    console.log(`Found ${slideFiles.length} slides in presentation`);
     
     // Parse presentation properties to get the title
     let title = 'Untitled Presentation';
@@ -60,7 +56,7 @@ export async function extractPptxContent(pptxBuffer: Buffer): Promise<ExtractedD
         }
       }
     } catch (err) {
-      console.log('Error parsing core properties:', err);
+      // Continue with default title if core properties extraction fails
     }
     
     // Try to get app title as fallback
@@ -79,7 +75,7 @@ export async function extractPptxContent(pptxBuffer: Buffer): Promise<ExtractedD
           }
         }
       } catch (err) {
-        console.log('Error parsing app properties:', err);
+        // Continue with default title if app properties extraction fails
       }
     }
     
@@ -113,7 +109,6 @@ export async function extractPptxContent(pptxBuffer: Buffer): Promise<ExtractedD
             fullText += extractedTables + '\n\n';
           }
         } catch (err) {
-          console.log(`Error parsing slide ${i+1}:`, err);
           fullText += `[Error parsing slide ${i+1}]\n\n`;
         }
       }
@@ -148,10 +143,6 @@ export async function extractPptxContent(pptxBuffer: Buffer): Promise<ExtractedD
     
     const difficulty = determineDifficulty(processedText);
     
-    const endTime = Date.now();
-    console.log(`PPTX extraction completed in ${(endTime - startTime) / 1000} seconds`);
-    console.log(`Extracted ${processedText.length} characters from ${slideFiles.length} slides`);
-    
     return {
       courseId,
       lectureId,
@@ -160,7 +151,6 @@ export async function extractPptxContent(pptxBuffer: Buffer): Promise<ExtractedD
       difficulty
     };
   } catch (error) {
-    console.error('Error extracting PPTX content:', error);
     return {
       courseId: 'Unknown',
       lectureId: 'Unknown',
@@ -173,6 +163,9 @@ export async function extractPptxContent(pptxBuffer: Buffer): Promise<ExtractedD
 
 /**
  * Extract text content from PowerPoint slide XML
+ * Navigates the complex XML structure to find and extract text elements
+ * @param slideXml The parsed XML structure of a PowerPoint slide
+ * @returns Extracted text content from the slide
  */
 export function extractTextFromSlide(slideXml: any): string {
   let text = '';
@@ -186,16 +179,16 @@ export function extractTextFromSlide(slideXml: any): string {
       
       const spTree = slideXml['p:sld']['p:cSld'][0]['p:spTree'][0];
       
-      // Process shapes (sp elements)
+      // Process shapes (sp elements) which contain text
       if (spTree['p:sp']) {
         for (const shape of spTree['p:sp']) {
           if (shape['p:txBody'] && 
               shape['p:txBody'][0]['a:p']) {
             
-            // Process paragraphs
+            // Process paragraphs within the shape
             for (const paragraph of shape['p:txBody'][0]['a:p']) {
               if (paragraph['a:r']) {
-                // Process text runs
+                // Process text runs within the paragraph
                 for (const run of paragraph['a:r']) {
                   if (run['a:t']) {
                     for (const textElement of run['a:t']) {
@@ -212,7 +205,7 @@ export function extractTextFromSlide(slideXml: any): string {
         }
       }
       
-      // Process group shapes (p:grpSp elements)
+      // Process group shapes (p:grpSp elements) - nested shapes
       if (spTree['p:grpSp']) {
         for (const groupShape of spTree['p:grpSp']) {
           if (groupShape['p:sp']) {
@@ -220,10 +213,10 @@ export function extractTextFromSlide(slideXml: any): string {
               if (shape['p:txBody'] && 
                   shape['p:txBody'][0]['a:p']) {
                 
-                // Process paragraphs
+                // Process paragraphs within grouped shapes
                 for (const paragraph of shape['p:txBody'][0]['a:p']) {
                   if (paragraph['a:r']) {
-                    // Process text runs
+                    // Process text runs within the paragraph
                     for (const run of paragraph['a:r']) {
                       if (run['a:t']) {
                         for (const textElement of run['a:t']) {
@@ -243,7 +236,7 @@ export function extractTextFromSlide(slideXml: any): string {
       }
     }
   } catch (error) {
-    console.log('Error extracting text from slide:', error);
+    // If extraction fails, return what we have so far
   }
   
   return text.trim();

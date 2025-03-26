@@ -9,19 +9,26 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 
 const client = generateClient<Schema>();
 
+/**
+ * Component for displaying available courses with progress tracking
+ */
 const CoursesPage: React.FC = () => {
+  // Core state management
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuthenticator((context) => [context.user]);
+  
+  // Progress tracking state
   const [userProgress, setUserProgress] = useState<Record<string, UserProgress>>({});
   const [lectureCountByCourse, setLectureCountByCourse] = useState<Record<string, number>>({});
 
+  // Fetch all courses on component mount
   useEffect(() => {
     async function fetchCourses() {
       try {
         setLoading(true);
-        // List all courses from the database
+        
         const { data: coursesData, errors } = await client.models.Course.list();
         
         if (errors) {
@@ -40,6 +47,10 @@ const CoursesPage: React.FC = () => {
     fetchCourses();
   }, []);
 
+  /**
+   * Creates an authenticated API client using the current user session
+   * @returns Authenticated API client or default client if authentication fails
+   */
   const getAuthenticatedClient = async () => {
     try {
       const { tokens } = await fetchAuthSession();
@@ -53,12 +64,13 @@ const CoursesPage: React.FC = () => {
     }
   };
 
+  // Fetch user progress data when user is authenticated
   useEffect(() => {
     async function fetchUserProgress() {
       if (!user) return;
       
       try {
-        // Use authenticated client
+        // Use authenticated client for user-specific data
         const authClient = await getAuthenticatedClient();
         
         const { data, errors } = await authClient.models.UserProgress.list({
@@ -73,7 +85,6 @@ const CoursesPage: React.FC = () => {
         // Convert array to object indexed by courseId for easier lookup
         if (data && data.length > 0) {
           const progressByCourse = data.reduce((acc, progress) => {
-            // Fix the key to use courseId instead of courseId
             acc[progress.courseId] = {
               ...progress,
               // Handle null/undefined cases for completedLectures
@@ -96,6 +107,7 @@ const CoursesPage: React.FC = () => {
     fetchUserProgress();
   }, [user]);
 
+  // Count lectures per course for progress calculation
   useEffect(() => {
     async function fetchLectureCounts() {
       if (!courses || courses.length === 0) return;
@@ -120,6 +132,7 @@ const CoursesPage: React.FC = () => {
     fetchLectureCounts();
   }, [courses]);
 
+  // Loading state
   if (loading) {
     return (
       <Flex direction="column" alignItems="center" justifyContent="center" padding="2rem">
@@ -129,6 +142,7 @@ const CoursesPage: React.FC = () => {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <View padding="2rem" backgroundColor="var(--amplify-colors-background-error)">
@@ -163,7 +177,6 @@ const CoursesPage: React.FC = () => {
               >
                 <div className="course-content">
                   <h2>{course.title}</h2>
-                  {/* {course.description && <p>{course.description}</p>} */}
                   
                   <div className="course-details">
                     {course.difficulty && (
@@ -173,7 +186,7 @@ const CoursesPage: React.FC = () => {
                     )}
                   </div>
                   
-                  {/* Progress indicator - always show for testing */}
+                  {/* Progress indicator with completion percentage */}
                   <div className="progress-indicator-course">
                     <div className="progress-bar">
                       <div 
@@ -207,7 +220,11 @@ const CoursesPage: React.FC = () => {
   );
 };
 
-// Helper functions
+/**
+ * Maps difficulty level to appropriate UI badge variation
+ * @param difficulty The difficulty level string
+ * @returns The badge variation to use
+ */
 function getDifficultyVariation(difficulty: string): "info" | "warning" | "error" {
   switch (difficulty.toLowerCase()) {
     case 'easy': return 'info';
@@ -217,6 +234,12 @@ function getDifficultyVariation(difficulty: string): "info" | "warning" | "error
   }
 }
 
+/**
+ * Calculates completion percentage for a course
+ * @param progress User's progress data for the course
+ * @param lectureCountByCourse Object mapping courseId to lecture count
+ * @returns Percentage of course completion (0-100)
+ */
 function calculateProgress(progress: UserProgress, lectureCountByCourse: Record<string, number>): number {
   const totalLectures = lectureCountByCourse[progress.courseId] || 10; // Default to 10 if unknown
   if (totalLectures === 0) return 0;
@@ -224,6 +247,11 @@ function calculateProgress(progress: UserProgress, lectureCountByCourse: Record<
   return Math.round((progress.completedLectures.length / totalLectures) * 100);
 }
 
+/**
+ * Formats an ISO date string into a human-readable format
+ * @param dateString ISO date string
+ * @returns Formatted date string (e.g., "Mar 26, 2025")
+ */
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat('en-US', { 

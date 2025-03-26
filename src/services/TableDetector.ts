@@ -1,13 +1,20 @@
+/**
+ * Result structure for table detection analysis
+ */
 export interface DetectionResult {
-  suggestedTable: string;
-  confidence: number; // 0-100
-  matchedFields: string[];
-  missingFields: string[];
-  reasoning: string;
+  suggestedTable: string;     // Name of the detected table
+  confidence: number;         // Confidence score (0-100%)
+  matchedFields: string[];    // Fields present in both input and table schema
+  missingFields: string[];    // Fields defined in schema but missing in input
+  reasoning: string;          // Explanation for the suggestion
 }
 
+/**
+ * Utility class for analyzing data structure and determining appropriate DynamoDB tables
+ * Used for automatic table detection and data validation in the admin interface
+ */
 export class TableDetector {
-  // Define the structure of each table
+  // Define the structure of each table in the database schema
   private static tableDefinitions = {
     Course: {
       fields: ["courseId", "title", "description", "difficulty"],
@@ -31,6 +38,11 @@ export class TableDetector {
     }
   };
   
+  /**
+   * Analyzes a JSON object and suggests matching database tables
+   * @param json The JSON object to analyze
+   * @returns Array of possible table matches with confidence scores, sorted by confidence
+   */
   static detectTable(json: any): DetectionResult[] {
     const results: DetectionResult[] = [];
     
@@ -49,7 +61,7 @@ export class TableDetector {
         const matchedFields = fields.filter(field => json.hasOwnProperty(field));
         const missingFields = fields.filter(field => !matchedFields.includes(field));
         
-        // Calculate true percentage confidence
+        // Calculate confidence as percentage of matching fields
         const confidence = Math.round(
           (matchedFields.length / fields.length) * 100
         );
@@ -71,6 +83,12 @@ export class TableDetector {
     return results.sort((a, b) => b.confidence - a.confidence);
   }
   
+  /**
+   * Validates an object against a specific table schema
+   * @param json The object to validate
+   * @param tableName The target table name
+   * @returns Validation result with missing required fields
+   */
   static validateForTable(json: any, tableName: string): { isValid: boolean, missingFields: string[] } {
     const tableDefinition = this.tableDefinitions[tableName as keyof typeof this.tableDefinitions];
     
@@ -87,8 +105,11 @@ export class TableDetector {
     };
   }
   
-  // Add this to your existing TableDetector class
-
+  /**
+   * Retrieves the schema definition for a specific table
+   * @param tableName The name of the table
+   * @returns The table schema or null if table doesn't exist
+   */
   static getTableSchema(tableName: string): { fields: string[], requiredFields: string[] } | null {
     const tableDefinition = this.tableDefinitions[tableName as keyof typeof this.tableDefinitions];
     if (!tableDefinition) return null;

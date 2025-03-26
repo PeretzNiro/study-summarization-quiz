@@ -5,42 +5,48 @@ import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Lambda handler function for quiz generation
+ * Processes events from SQS, API Gateway, or direct invocation
+ * Generates quiz questions and stores them in DynamoDB
  */
 export const handler: Handler = async (event: any) => {
   console.log("Starting quiz generator Lambda function");
   
   try {
-    // Extract parameters from event
-    let content, courseId, lectureId, itemId, summary, title;
+    // Extract parameters from event based on source
+    let content, courseId, lectureId, itemId, summary, title, duration;
     
     if (event.Records && event.Records.length > 0 && event.Records[0].body) {
-      // From SQS
+      // From SQS queue (typically triggered by summarization)
       const body = JSON.parse(event.Records[0].body);
       content = body.content;
       courseId = body.courseId;
       lectureId = body.lectureId;
       itemId = body.id;
       summary = body.summary;
-      title = body.title;  // Extract title from SQS event
+      title = body.title;
+      duration = body.duration;
     } else if (event.body) {
-      // From API Gateway
+      // From API Gateway (direct HTTP request)
       const body = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
       content = body.content;
       courseId = body.courseId;
       lectureId = body.lectureId;
       itemId = body.id;
       summary = body.summary;
-      title = body.title;  // Extract title from API Gateway event
+      title = body.title;
+      duration = body.duration;
     } else {
-      // Direct invocation
+      // Direct Lambda invocation (function-to-function)
       content = event.content;
       courseId = event.courseId;
       lectureId = event.lectureId;
       itemId = event.id;
       summary = event.summary;
-      title = event.title;  // Extract title from direct invocation
+      title = event.title;
+      duration = event.duration;
     }
     
+    // Validate required parameters
     if (!content && !summary) {
       return {
         statusCode: 400,
@@ -48,12 +54,11 @@ export const handler: Handler = async (event: any) => {
       };
     }
 
-    // Use summary if available, otherwise use content
+    // Prefer using summary over raw content for better questions
     const textToProcess = summary || content;
     
-    // Access API key directly from environment
-    console.log("Accessing Gemini API key from environment");
-    const apiKey = process.env.GEMINI_API_KEY; // This is set by the secret() function
+    // Get the API key from environment
+    const apiKey = process.env.GEMINI_API_KEY;
     
     if (!apiKey) {
       console.log("API key not found in environment");
@@ -63,16 +68,14 @@ export const handler: Handler = async (event: any) => {
       };
     }
     
-    console.log("API key accessed successfully");
-    
-    // Generate quiz questions
-    console.log("Generating quiz questions...");
+    // Generate questions with AI
     const questionCount = event.questionCount || 10;
     const startTime = Date.now();
     const quizQuestions = await generateQuizQuestions(textToProcess, apiKey, questionCount);
     const endTime = Date.now();
     console.log(`Quiz questions generated in ${(endTime - startTime) / 1000} seconds`);
     
+    // Handle errors from quiz generation
     if (!quizQuestions || (typeof quizQuestions === 'string' && quizQuestions.startsWith("Error:"))) {
       console.log(`Error generating quiz questions: ${quizQuestions}`);
       return {
@@ -81,26 +84,23 @@ export const handler: Handler = async (event: any) => {
       };
     }
     
-    // Store the quiz questions in DynamoDB if we have course and lecture IDs
+    // Store questions in DynamoDB if identifiers are available
     if (courseId && lectureId && Array.isArray(quizQuestions)) {
       console.log(`Storing ${quizQuestions.length} quiz questions for course ${courseId}, lecture ${lectureId}`);
       const dynamoDB = new DynamoDB.DocumentClient();
       const tableName = process.env.QUIZ_QUESTION_TABLE_NAME || 'QuizQuestion-dev';
       
       try {
-        // Prepare quiz questions for batch write
+        // Track question IDs for creating a quiz
         const questionIds: string[] = [];
         
-        // Process each question
+        // Store each question individually
         for (const question of quizQuestions) {
-          // Get current timestamp
           const now = new Date().toISOString();
-          
-          // Generate the ID once and store it for later use
           const questionId = uuidv4();
-          questionIds.push(questionId); // Add to array immediately
+          questionIds.push(questionId);
           
-          // Create the item to insert with the explicit ID
+          // Prepare question data with required fields
           const item = {
             id: questionId,
             courseId: courseId,
@@ -118,7 +118,7 @@ export const handler: Handler = async (event: any) => {
             __typename: 'QuizQuestion'
           };
           
-          // Put the item directly
+          // Insert into DynamoDB
           await dynamoDB.put({
             TableName: tableName,
             Item: item
@@ -126,19 +126,18 @@ export const handler: Handler = async (event: any) => {
         }
         
         console.log(`Successfully stored ${quizQuestions.length} quiz questions`);
-        console.log(`Question IDs: ${questionIds.join(', ')}`);
         
-        // Create default quiz in Quiz table
+        // Create a default quiz that includes all questions
         try {
           const quizTableName = process.env.QUIZ_TABLE_NAME || 'Quiz-dev';
           
-          // Let's create a new quiz with auto-generated ID
+          // Format quiz data
           const quizItem = {
-            id: uuidv4(), // Add an explicit ID
+            id: uuidv4(),
             courseId: courseId,
             lectureId: lectureId,
-            quizId: `quiz-1`, // Always start with quiz-1 for simplicity
-            title: title ? `${title} Quiz` : 'Lecture Quiz', // Use lecture title if available
+            quizId: `quiz-1`, // Default identifier for the first quiz
+            title: title ? `${title} Quiz` : 'Lecture Quiz',
             description: 'Main quiz for this lecture',
             questionIds: questionIds, 
             passingScore: 70,
@@ -150,7 +149,7 @@ export const handler: Handler = async (event: any) => {
             __typename: 'Quiz'
           };
           
-          // Put the quiz item
+          // Insert quiz into DynamoDB
           await dynamoDB.put({
             TableName: quizTableName,
             Item: quizItem
@@ -160,16 +159,16 @@ export const handler: Handler = async (event: any) => {
           
         } catch (error) {
           console.error("Error creating quiz:", error);
-          // Continue execution
+          // Continue execution even if quiz creation fails
         }
         
       } catch (error) {
         console.error("Error storing quiz questions in DynamoDB:", error);
-        // Continue execution - we'll still return the questions
+        // Continue execution to still return generated questions
       }
     }
     
-    // Return success with the quiz questions
+    // Return success response with generated questions
     return {
       statusCode: 200,
       body: JSON.stringify({

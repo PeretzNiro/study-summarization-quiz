@@ -2,6 +2,11 @@ import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/ge
 
 /**
  * Create an educational summary using Google's Generative AI
+ * Transforms lecture content into structured, student-friendly summaries
+ * @param text The lecture content to summarize
+ * @param apiKey Google Gemini API key
+ * @param maxWords Target word count for the summary (default: 2000)
+ * @returns Formatted educational summary or error message
  */
 export async function createSummary(text: string, apiKey: string, maxWords: number = 2000): Promise<string> {
   try {
@@ -35,7 +40,7 @@ export async function createSummary(text: string, apiKey: string, maxWords: numb
       ]      
     });
     
-    // Prepare the educational prompt
+    // Prepare the educational prompt with structured sections
     const prompt = `As an educational content creator, create a comprehensive lesson summary of the following lecture content. 
 The summary should:
 
@@ -76,11 +81,12 @@ Return only the text formatted exactly as specified above. Do not include any ad
     const result = await model.generateContent(prompt);
     let responseText = result.response.text();
 
-    // Check if the response starts with the learning objectives marker
+    // Cleanup response by ensuring it starts with the learning objectives section
     const marker = "# Learning Objectives:";
     if (!responseText.startsWith(marker)) {
       const markerIndex = responseText.indexOf(marker);
       if (markerIndex !== -1) {
+        // Remove any preamble text before the structured content
         responseText = responseText.slice(markerIndex);
       }
     }

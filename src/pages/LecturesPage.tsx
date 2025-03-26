@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { generateClient } from 'aws-amplify/data';
-import { useAuthenticator } from '@aws-amplify/ui-react'; // Add this import
+import { useAuthenticator } from '@aws-amplify/ui-react';
 import 'katex/dist/katex.min.css';
 import type { Schema } from '../../amplify/data/resource';
 import { Course } from '../types/models';
 import '../styles/Lectures.css';
-import { fetchAuthSession } from 'aws-amplify/auth'; // Add this import
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 // Use the type from the generated Schema
 type Lecture = Schema['Lecture']['type'];
@@ -17,16 +17,18 @@ const client = generateClient<Schema>();
 const LecturesPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthenticator((context) => [context.user]); // Add user authentication
+  const { user } = useAuthenticator((context) => [context.user]);
   
+  // State management for page data
   const [course, setCourse] = useState<Course | null>(null);
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [, setUserProgress] = useState<UserProgress | null>(null); // Add state for user progress
+  const [, setUserProgress] = useState<UserProgress | null>(null);
   const [, setProgressLoading] = useState(false);
   const [completedLectureIds, setCompletedLectureIds] = useState<string[]>([]);
 
+  // Fetch course details and lectures on component mount or courseId change
   useEffect(() => {
     async function fetchCourseAndLectures() {
       if (!courseId) return;
@@ -64,7 +66,7 @@ const LecturesPage: React.FC = () => {
           throw new Error('Failed to fetch lectures');
         }
         
-        // Sort lectures by lectureId if needed
+        // Sort lectures by lectureId using natural sort order
         const sortedLectures = [...lecturesData].sort((a, b) => 
           a.lectureId.localeCompare(b.lectureId, undefined, { numeric: true })
         );
@@ -81,12 +83,12 @@ const LecturesPage: React.FC = () => {
     fetchCourseAndLectures();
   }, [courseId]);
 
-  // Add new useEffect to fetch user progress
+  // Fetch user's progress data for this course
   useEffect(() => {
     fetchUserProgress();
   }, [courseId, user]);
   
-  // Add this function before fetchUserProgress
+  // Create an authenticated API client using the current user session
   const getAuthenticatedClient = async () => {
     try {
       const { tokens } = await fetchAuthSession();
@@ -100,7 +102,7 @@ const LecturesPage: React.FC = () => {
     }
   };
 
-  // Then update your fetchUserProgress function
+  // Retrieve the user's progress data for tracking completed lectures
   async function fetchUserProgress() {
     if (!user || !courseId) {
       return;
@@ -108,8 +110,7 @@ const LecturesPage: React.FC = () => {
     
     setProgressLoading(true);
     try {
-      
-      // Use an authenticated client
+      // Use an authenticated client for user-specific data
       const authClient = await getAuthenticatedClient();
       
       const { data: progressData } = await authClient.models.UserProgress.list({
@@ -120,20 +121,22 @@ const LecturesPage: React.FC = () => {
       });
       
       if (progressData && progressData.length > 0) {
-        
-        // Extract completed lecture IDs
+        // Extract completed lecture IDs, handling various data formats
         let completedLectures: string[] = [];
         
         if (Array.isArray(progressData[0].completedLectures)) {
+          // Handle DynamoDB attribute value format if present
           if (progressData[0].completedLectures.length > 0 && 
                 typeof progressData[0].completedLectures[0] === 'object' && 
                 progressData[0].completedLectures[0] !== null &&
                 'S' in progressData[0].completedLectures[0]) {
             completedLectures = progressData[0].completedLectures.map((item: any) => item.S);
           } else {
+            // Standard array of strings
             completedLectures = progressData[0].completedLectures.filter((item): item is string => item !== null);
           }
         } else if (typeof progressData[0].completedLectures === 'string') {
+          // Handle serialized JSON string format
           try {
             completedLectures = JSON.parse(progressData[0].completedLectures);
           } catch (e) {
@@ -141,11 +144,11 @@ const LecturesPage: React.FC = () => {
           }
         }
         
-        
-        // Save both the whole progress object and the completed lecture IDs
+        // Update state with progress data
         setUserProgress(progressData[0]);
         setCompletedLectureIds(completedLectures);
       } else {
+        // No progress data found
         setUserProgress(null);
         setCompletedLectureIds([]);
       }
@@ -156,17 +159,17 @@ const LecturesPage: React.FC = () => {
     }
   }
   
-  // Updated isLectureCompleted function
+  // Check if a lecture has been completed by the user
   const isLectureCompleted = (lectureId: string): boolean => {
-    // Use the pre-processed completed lecture IDs
     return completedLectureIds.includes(lectureId);
   };
 
+  // Navigate to the quiz for a specific lecture
   const handleStartQuiz = (lectureId: string) => {
     navigate(`/courses/${courseId}/lectures/${lectureId}/quiz`);
   };
 
-  // Helper function for badge variation
+  // Map difficulty strings to UI badge variations
   function getDifficultyVariation(difficulty: string): "info" | "warning" | "error" | "natural" {
     const lowerDifficulty = difficulty.toLowerCase();
     if (lowerDifficulty === 'easy') return "info";
@@ -175,14 +178,17 @@ const LecturesPage: React.FC = () => {
     return "natural"; // Default
   }
 
+  // Loading state UI
   if (loading) {
     return <div className="loading-container">Loading course content...</div>;
   }
 
+  // Error state UI
   if (error || !course) {
     return <div className="error-container">{error || 'Course not found'}</div>;
   }
 
+  // Render course and lecture list
   return (
     <div className="lectures-page">    
       <div className="lecture-navigation">

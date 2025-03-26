@@ -4,6 +4,8 @@
 
 /**
  * Clean up pipe characters that don't represent actual tables
+ * @param content Raw text content that may contain pipe characters
+ * @returns Text with non-table pipes removed but table structures preserved
  */
 export function cleanPipeArtifacts(content: string): string {
   // Don't touch lines that look like actual tables (multiple pipes)
@@ -26,6 +28,9 @@ export function cleanPipeArtifacts(content: string): string {
 
 /**
  * Detect and format basic tables from text with aligned columns
+ * Identifies tabular structures based on consistent column alignment
+ * @param content Text content to analyze for table structures
+ * @returns Content with detected tables formatted in markdown-style
  */
 export function detectSimpleTables(content: string): string {
   const lines = content.split('\n');
@@ -106,6 +111,9 @@ export function detectSimpleTables(content: string): string {
 
 /**
  * Format detected table lines into a proper tabular structure
+ * Analyzes spacing patterns to determine column boundaries
+ * @param lines Array of text lines representing a potential table
+ * @returns Array of formatted table rows with pipe delimiters
  */
 export function formatAsTable(lines: string[]): string[] {
   // Find positions where columns likely start
@@ -148,6 +156,9 @@ export function formatAsTable(lines: string[]): string[] {
 
 /**
  * Detect likely column positions based on character frequency
+ * Analyzes whitespace patterns to determine where columns begin
+ * @param lines Array of text lines to analyze
+ * @returns Array of character positions where columns likely begin
  */
 export function detectColumnPositions(lines: string[]): number[] {
   const positions = [0]; // Always start with position 0

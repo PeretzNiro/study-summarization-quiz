@@ -2,17 +2,28 @@ import { generateClient } from 'aws-amplify/api';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import type { Schema } from '../../amplify/data/resource';
 
+// Default client for unauthenticated operations
 const client = generateClient<Schema>();
 
+/**
+ * Interface defining the structure of course data
+ */
 export interface CourseData {
-  id?: string;
-  courseId: string;
-  title?: string;
-  description?: string;
-  difficulty?: string;
+  id?: string;                // Internal database ID
+  courseId: string;           // Business identifier for the course
+  title?: string;             // Display title
+  description?: string;       // Course description
+  difficulty?: string;        // Difficulty level
 }
 
+/**
+ * Service class for course-related operations
+ */
 export class CourseService {
+  /**
+   * Creates an authenticated API client using the current user session
+   * @returns Authenticated API client or default client if authentication fails
+   */
   static async getAuthenticatedClient() {
     try {
       const { tokens } = await fetchAuthSession();
@@ -26,6 +37,11 @@ export class CourseService {
     }
   }
 
+  /**
+   * Creates a new course
+   * @param courseData The course data to create
+   * @returns The created course
+   */
   static async createCourse(courseData: any) {
     try {
       const client = await this.getAuthenticatedClient();
@@ -37,6 +53,12 @@ export class CourseService {
     }
   }
 
+  /**
+   * Updates an existing course
+   * @param id The unique identifier of the course
+   * @param courseData The updated course data
+   * @returns The updated course
+   */
   static async updateCourse(id: string, courseData: any) {
     try {
       const client = await this.getAuthenticatedClient();
@@ -64,6 +86,7 @@ export class CourseService {
         return [];
       }
       
+      // Map database objects to CourseData interface
       return (courses || []).map(course => ({
         id: course.id,
         courseId: course.courseId,

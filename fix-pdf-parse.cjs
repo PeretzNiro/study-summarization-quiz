@@ -1,3 +1,13 @@
+/**
+ * Fix for pdf-parse Module Compatibility
+ * 
+ * This script patches the pdf-parse module to prevent startup failures
+ * caused by its default behavior of attempting to run tests on initialization.
+ * 
+ * The original module tries to access test fixtures that may be missing
+ * in production environments, causing application crashes.
+ */
+
 const fs = require('fs');
 const path = require('path');
 

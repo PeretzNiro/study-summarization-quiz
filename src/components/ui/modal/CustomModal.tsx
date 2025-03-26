@@ -1,7 +1,13 @@
 import React from 'react';
 import './CustomModal.css';
 
-// Create a custom modal component
+/**
+ * Modal component that renders content in an overlay
+ * Handles click events with propagation control for dismissal
+ * @param isOpen Controls the visibility of the modal
+ * @param onClose Callback function executed when closing the modal
+ * @param children Content to be displayed inside the modal
+ */
 export const CustomModal = ({ 
     isOpen, 
     onClose, 
@@ -11,6 +17,7 @@ export const CustomModal = ({
     onClose: () => void; 
     children: React.ReactNode;
   }) => {
+    // Don't render anything if modal is not open
     if (!isOpen) return null;
     
     return (

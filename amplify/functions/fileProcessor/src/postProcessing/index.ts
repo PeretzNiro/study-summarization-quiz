@@ -1,10 +1,15 @@
 /**
  * Main exports for the postprocessing module
+ * 
+ * This file centralizes exports from all text processing utilities,
+ * making them accessible through a single import location.
+ * Use the main postprocessContent function for standard processing,
+ * or individual utilities for more targeted text transformations.
  */
 
 export { postprocessContent } from './core';
 
-// Also export individual utilities for use in other parts of the application
+// Export individual utilities for use in other parts of the application
 export { 
   normalizeWhitespace,
   removeRedundantLineBreaks,

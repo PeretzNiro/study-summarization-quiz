@@ -3,35 +3,38 @@ import * as path from 'path';
 import type { Handler } from 'aws-lambda';
 import { extractPdfWithTables, extractPptxContent, ExtractedData } from './src/extractors';
 
+// Initialize AWS clients
 const s3 = new AWS.S3();
 const lambda = new AWS.Lambda();
 
 /**
- * Main handler function
+ * Lambda handler for processing files uploaded to S3
+ * Extracts content from PDF/PPTX files and forwards to data processor
  */
 export const handler: Handler = async (event: any): Promise<any> => {
   try {
-    // Process S3 event
+    // Extract S3 event information
     const bucket = event.Records[0].s3.bucket.name;
     const key = event.Records[0].s3.object.key;
     
-    // URL decode the key
+    // URL decode the key (S3 events pass URL-encoded keys)
     const keyDecoded = decodeURIComponent(key);
     
     console.log(`Processing file: s3://${bucket}/${keyDecoded}`);
     
-    // Extract file content
+    // Extract file content based on file type
     const extractedData = await extractContentFromFile(bucket, keyDecoded);
     
-    // Invoke dataProcessor Lambda to store the data
+    // Get reference to the next function in processing pipeline
     const dataProcessorFunction = process.env.DATA_PROCESSOR_FUNCTION_NAME;
     
     if (dataProcessorFunction) {
       console.log(`Invoking data processor function: ${dataProcessorFunction}`);
       
+      // Asynchronously invoke data processor to handle the extracted content
       const response = await lambda.invoke({
         FunctionName: dataProcessorFunction,
-        InvocationType: 'Event',
+        InvocationType: 'Event', // Non-blocking invocation
         Payload: JSON.stringify(extractedData)
       }).promise();
       
@@ -65,27 +68,31 @@ export const handler: Handler = async (event: any): Promise<any> => {
 };
 
 /**
- * Extract content from file in S3
+ * Extracts content from a file in S3 based on file type
+ * @param bucket S3 bucket name
+ * @param key Object key/path in S3
+ * @returns Structured data with extracted content and metadata
  */
 async function extractContentFromFile(bucket: string, key: string): Promise<ExtractedData> {
-  // Get the file from S3
+  // Download file from S3
   const response = await s3.getObject({ Bucket: bucket, Key: key }).promise();
   const fileBuffer = response.Body as Buffer;
   
-  // Determine file type from key
+  // Parse file extension to determine type
   const fileExtension = path.extname(key).toLowerCase();
   
-  // Extract data based on file type
+  // Process content based on file extension
   let extractedData;
   
   switch (fileExtension) {
     case '.pdf':
-      // Use the enhanced PDF extraction with table detection
+      // Extract text and table content from PDF
       extractedData = await extractPdfWithTables(fileBuffer);
       break;
     
     case '.pptx':
     case '.ppt':
+      // Extract text and slide content from PowerPoint
       extractedData = await extractPptxContent(fileBuffer);
       break;
     
@@ -93,9 +100,18 @@ async function extractContentFromFile(bucket: string, key: string): Promise<Extr
       throw new Error(`Unsupported file type: ${fileExtension}`);
   }
   
-  // Add file metadata
+  // Enhance extracted data with file metadata
   extractedData.fileName = path.basename(key);
-  extractedData.fileType = fileExtension.substring(1); // Remove the dot
+  extractedData.fileType = fileExtension.substring(1); // Remove the leading dot
+  
+  // Extract course and lecture identifiers from the file path if present
+  // Format: /protected/USERID/courseId/lectureId/filename.ext
+  const pathParts = key.split('/');
+  if (pathParts.length >= 5) {
+    // Extract course and lecture IDs from the path structure
+    extractedData.courseId = extractedData.courseId || pathParts[pathParts.length - 3];
+    extractedData.lectureId = extractedData.lectureId || pathParts[pathParts.length - 2];
+  }
   
   return extractedData;
 }

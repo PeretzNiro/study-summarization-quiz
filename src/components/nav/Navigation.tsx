@@ -7,9 +7,13 @@ interface NavigationProps {
   setActiveTab: (tab: string) => void;
   onSignOut: () => void;
   className?: string;
-  showAdminTab?: boolean; // New prop
+  showAdminTab?: boolean; // Controls visibility of admin functionality
 }
 
+/**
+ * Navigation component that adapts to both mobile and desktop layouts
+ * Provides tab navigation and user authentication controls
+ */
 const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   setActiveTab,
@@ -20,7 +24,7 @@ const Navigation: React.FC<NavigationProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   
-  // Check if we're on a mobile device
+  // Detect viewport size changes to toggle between mobile and desktop layouts
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -36,13 +40,13 @@ const Navigation: React.FC<NavigationProps> = ({
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
   
-  // Close menu when a tab is clicked
+  // Close mobile menu when navigating between tabs
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
   };
   
-  // Handle sign out and close menu
+  // Handle sign out and close mobile menu
   const handleSignOut = () => {
     setIsMobileMenuOpen(false);
     onSignOut();
@@ -59,7 +63,7 @@ const Navigation: React.FC<NavigationProps> = ({
           <span>🎓 LearnApp</span>
         </div>
 
-        {/* Hamburger icon for mobile */}
+        {/* Hamburger menu button (mobile only) */}
         {isMobile && (
           <button 
             className={`hamburger-menu ${isMobileMenuOpen ? 'open' : ''}`}
@@ -72,7 +76,7 @@ const Navigation: React.FC<NavigationProps> = ({
           </button>
         )}
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - horizontal layout */}
         {!isMobile && (
           <Flex className="desktop-nav">
             <div className='nav_spacing'>
@@ -89,7 +93,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 Courses
               </Button>
               
-              {/* Only show Admin button for admin users */}
+              {/* Conditional admin tab based on user permissions */}
               {showAdminTab && (
                 <Button
                   variation={activeTab === 'admin' ? 'primary' : 'link'}
@@ -106,7 +110,7 @@ const Navigation: React.FC<NavigationProps> = ({
         )}
       </Flex>
 
-      {/* Mobile Navigation Menu */}
+      {/* Mobile Navigation - collapsible vertical menu */}
       {isMobile && (
         <div className={`mobile-nav ${isMobileMenuOpen ? 'open' : ''}`}>
           <Button
@@ -126,7 +130,7 @@ const Navigation: React.FC<NavigationProps> = ({
             Courses
           </Button>
           
-          {/* Only show Admin button for admin users */}
+          {/* Conditional admin tab based on user permissions */}
           {showAdminTab && (
             <Button
               className="mobile-nav-item"
