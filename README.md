@@ -42,7 +42,7 @@ This platform automatically processes educational content from documents (PDFs, 
 ### Step 1: Clone the Repository
 
 ```bash
-git clone <https://github.com/yourusername/study-summarization-quiz.git>
+git clone <https://github.com/PeretzNiro/study-summarization-quiz.git>
 cd study-summarization-quiz
 
 ```
