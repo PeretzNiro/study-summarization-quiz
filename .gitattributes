@@ -1,0 +1,2 @@
+# Mark the PDF.js library files as vendored code (excluded from language statistics)
+lib/pdf-parse/** linguist-vendored=true

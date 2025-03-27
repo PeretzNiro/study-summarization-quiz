@@ -27,3 +27,6 @@ dist-ssr
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+
+# Exclude vendor libraries
+lib/pdf-parse/**
