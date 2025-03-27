@@ -55,6 +55,9 @@ const LecturesTab: React.FC<LecturesTabProps> = ({
   // User feedback messaging
   const [actionMessage, setActionMessage] = useState<ActionMessage | null>(null);
 
+  // State for refreshing lectures
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   /**
    * Fetch course data when component mounts
    */
@@ -170,6 +173,43 @@ const LecturesTab: React.FC<LecturesTabProps> = ({
   };
 
   /**
+   * Manually refresh the list of lectures
+   */
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Fetch fresh lecture data
+      setLectureLoading(true);
+      setLectureError(null);
+      
+      // Build filter based on selected course
+      const filter = courseFilter ? 
+        { courseId: { eq: courseFilter } } : 
+        undefined;
+      
+      const authClient = await getAuthenticatedClient();
+      const result = await authClient.models.Lecture.list({ filter });
+      
+      if (result.errors && result.errors.length > 0) {
+        throw new Error(`Failed to fetch lectures: ${result.errors[0].message}`);
+      }
+      
+      setLectures(result.data || []);
+      
+    } catch (error: any) {
+      console.error('Error refreshing lectures:', error);
+      setLectureError(`Failed to load lectures: ${error.message || 'Unknown error'}`);
+      
+      // Show error message if refresh fails
+      setActionMessage({ text: `Failed to refresh lectures: ${error.message || 'Unknown error'}`, type: 'error' });
+      setTimeout(() => setActionMessage(null), 3000);
+    } finally {
+      setLectureLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  /**
    * Render modal for editing lecture content
    * Includes form with fields for all editable properties
    */
@@ -256,7 +296,19 @@ const LecturesTab: React.FC<LecturesTabProps> = ({
 
   return (
     <Card className='radius overflow-x-scroll'>
-      <Heading level={4} marginBottom="1rem">Lecture Content</Heading>
+      <Flex direction="row" justifyContent="space-between" alignItems="center" marginBottom="1rem">
+        <Heading level={4}>Lecture Content</Heading>
+        
+        <Button
+          variation="link"
+          size="small"
+          onClick={handleRefresh}
+          isLoading={isRefreshing}
+          loadingText="Refreshing..."
+        >
+          {isRefreshing ? "Refreshing..." : "↻ Refresh"}
+        </Button>
+      </Flex>
       
       {/* Status and error messages */}
       {actionMessage && (
