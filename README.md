@@ -2,8 +2,8 @@
 
 An advanced educational platform that transforms lecture materials into summarized content and interactive quizzes using AI. Built with React, TypeScript, and AWS Amplify Gen 2.
 
-![Education Platform](https://img.shields.io/badge/Education-Platform-blue)
-![AWS Amplify](https://img.shields.io/badge/AWS-Amplify-orange)
+![Education Platform](https://img.shields.io/badge/Education-Platform-purple)
+![AWS Amplify](https://img.shields.io/badge/AWS-Amplify-darkred)
 ![React](https://img.shields.io/badge/React-TypeScript-blue)
 ![AI](https://img.shields.io/badge/AI-Powered-brightgreen)
 ![Node.js](https://img.shields.io/badge/Node.js-Serverless-green)
@@ -34,7 +34,7 @@ This platform automatically processes educational content from documents (PDFs, 
 
 ### Prerequisites
 
-1. **Node.js and npm**: Install Node.js (v16 or newer) from [nodejs.org](https://nodejs.org/)
+1. **Node.js and npm**: Install Node.js (v18 or newer) from [nodejs.org](https://nodejs.org/)
 2. **AWS Account**: Create a free AWS account at [aws.amazon.com](https://aws.amazon.com/)
 3. **Google API Key**: Obtain a Google Gemini API key from [Google AI Studio](https://ai.google.dev/)
 4. **Git**: Install Git from [git-scm.com](https://git-scm.com/)
