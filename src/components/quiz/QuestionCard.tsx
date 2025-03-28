@@ -5,26 +5,13 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
+import { shouldRenderAsMarkdown, getMarkdownComponents } from '../../components/markdown/MarkdownUtils';
 interface QuestionCardProps {
   question: QuizQuestion;
   selectedAnswerIndex: number | null;
   onAnswerSelect: (answerIndex: number) => void;
   isSubmitted: boolean;
 }
-
-/**
- * Determines if content should be treated as markdown
- * @param content - The content to check
- * @returns true if the content contains markdown elements, false otherwise
- */
-const shouldRenderAsMarkdown = (content: string) => {
-  // Check if the content has special markers or looks like it contains markdown
-  // This regex checks for common markdown patterns
-  return /```|\$\$.+\$\$|\$[^$]+\$|!\[.*\]\(.*\)|\[.*\]\(.*\)|<table>|<img>|#{1,6}\s|```[a-z]*\n/.test(content);
-};
 
 /**
  * Displays a single quiz question with multiple-choice options
@@ -44,41 +31,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         <ReactMarkdown 
           rehypePlugins={[rehypeRaw, rehypeKatex]}
           remarkPlugins={[remarkGfm, remarkMath]}
-          components={{
-            // Add responsive table wrapper
-            table: ({node, children, ...props}) => (
-              <div className="table-wrapper">
-                <table {...props}>{children}</table>
-              </div>
-            ),
-            // Syntax highlighting for code blocks
-            code({node, inline, className, children, ...props}: {
-              node?: any;
-              inline?: boolean;
-              className?: string;
-              children?: React.ReactNode;
-              [key: string]: any;
-            }) {
-              const match = /language-(\w+)/.exec(className || '');
-              return !inline && match ? (
-                <SyntaxHighlighter
-                  style={vscDarkPlus}
-                  language={match[1]}
-                  PreTag="div"
-                  customStyle={{
-                    borderRadius: '8px'
-                  }}
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              ) : (
-                <code className={className} {...props}>
-                  {children}
-                </code>
-              );
-            }
-          }}
+          components={getMarkdownComponents()}
         >
           {question.question}
         </ReactMarkdown>
@@ -113,36 +66,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     <ReactMarkdown 
                       rehypePlugins={[rehypeRaw, rehypeKatex]}
                       remarkPlugins={[remarkGfm, remarkMath]}
-                      components={{
-                        // Syntax highlighting for code blocks in answers
-                        code({node, inline, className, children, ...props}: {
-                          node?: any;
-                          inline?: boolean;
-                          className?: string;
-                          children?: React.ReactNode;
-                          [key: string]: any;
-                        }) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline && match ? (
-                            <SyntaxHighlighter
-                              style={vscDarkPlus}
-                              language={match[1]}
-                              PreTag="div"
-                              customStyle={{
-                                borderRadius: '6px',
-                                margin: '0.5rem 0'
-                              }}
-                              {...props}
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          );
-                        }
-                      }}
+                      components={getMarkdownComponents()}
                     >
                       {choice}
                     </ReactMarkdown>
@@ -165,6 +89,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <ReactMarkdown 
             rehypePlugins={[rehypeRaw, rehypeKatex]}
             remarkPlugins={[remarkGfm, remarkMath]}
+            components={getMarkdownComponents()}
           >
             {question.explanation}
           </ReactMarkdown>

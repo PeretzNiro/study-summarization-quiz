@@ -6,9 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-
+import { shouldRenderAsMarkdown, getMarkdownComponents } from '../../components/markdown/MarkdownUtils';
 interface QuizResultsProps {
   questions: QuizQuestion[];        // List of all quiz questions
   userAnswers: UserAnswer[];        // User's submitted answers
@@ -17,16 +15,6 @@ interface QuizResultsProps {
   onRestartQuiz: () => void;        // Handler for restarting the quiz
   courseId: string;                 // Course identifier for navigation
 }
-
-/**
- * Determines if content should be treated as markdown
- * @param content - The content to check
- * @returns true if the content contains markdown elements, false otherwise
- */
-const shouldRenderAsMarkdown = (content: string) => {
-  // Check if the content has special markers or looks like it contains markdown
-  return /```|\$\$.+\$\$|\$[^$]+\$|!\[.*\]\(.*\)|\[.*\]\(.*\)|<table>|<img>|#{1,6}\s|```[a-z]*\n/.test(content);
-};
 
 /**
   * Displays markdown or plain text based on content type
@@ -38,36 +26,7 @@ const MarkdownOrText = ({ children }: { children: string }) => (
     <ReactMarkdown 
       rehypePlugins={[rehypeRaw, rehypeKatex]}
       remarkPlugins={[remarkGfm, remarkMath]}
-      components={{
-        // Syntax highlighting for code blocks
-        code({node, inline, className, children, ...props}: {
-          node?: any;
-          inline?: boolean;
-          className?: string;
-          children?: React.ReactNode;
-          [key: string]: any;
-        }) {
-          const match = /language-(\w+)/.exec(className || '');
-          return !inline && match ? (
-            <SyntaxHighlighter
-              style={vscDarkPlus}
-              language={match[1]}
-              PreTag="div"
-              customStyle={{
-                borderRadius: '6px',
-                margin: '0.5rem 0'
-              }}
-              {...props}
-            >
-              {String(children).replace(/\n$/, '')}
-            </SyntaxHighlighter>
-          ) : (
-            <code className={className} {...props}>
-              {children}
-            </code>
-          );
-        }
-      }}
+      components={getMarkdownComponents()}
     >
       {children}
     </ReactMarkdown>
@@ -140,6 +99,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                 <ReactMarkdown 
                   rehypePlugins={[rehypeRaw, rehypeKatex]}
                   remarkPlugins={[remarkGfm, remarkMath]}
+                  components={getMarkdownComponents()}
                 >
                   {question.question}
                 </ReactMarkdown>
@@ -175,6 +135,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                 <ReactMarkdown 
                   rehypePlugins={[rehypeRaw, rehypeKatex]}
                   remarkPlugins={[remarkGfm, remarkMath]}
+                  components={getMarkdownComponents()}
                 >
                   {question.explanation}
                 </ReactMarkdown>
