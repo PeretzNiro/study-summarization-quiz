@@ -198,6 +198,9 @@ h2 {
   .overflow-x-scroll {
     overflow-x: scroll !important;
   }
+  .box_wrapper_no_hover {
+    padding: 1rem;
+  }
 }
 
 @media screen and (max-width: 500px) {

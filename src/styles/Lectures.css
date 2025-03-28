@@ -299,11 +299,20 @@ pre code:not([class]) {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background-color: #4CAF50;
   color: white;
   font-size: 14px;
   font-weight: bold;
   vertical-align: middle;
+}
+
+/* Keep the existing style for passed quizzes */
+.completion-indicator.passed {
+  background-color: #4CAF50;
+}
+
+/* Add new style for failed quizzes */
+.completion-indicator.failed {
+  background-color: #F44336;
 }
 
 /* Enhance the lecture card when it's completed */

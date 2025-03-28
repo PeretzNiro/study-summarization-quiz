@@ -50,6 +50,7 @@ const LectureDetailPage: React.FC = () => {
   const [savingProgress, setSavingProgress] = useState(false);
   const [progressError, setProgressError] = useState<string | null>(null);
   const [isLectureCompleted, setIsLectureCompleted] = useState(false);
+  const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
 
   /**
    * Maps difficulty level to UI badge variation
@@ -128,9 +129,34 @@ const LectureDetailPage: React.FC = () => {
           const currentProgress = existingProgress[0];
           const completedLectures = new Set(currentProgress.completedLectures || []);
           
-          // Check if this lecture is already marked as completed without adding it
+          // Check if this lecture is already marked as completed
           if (lectureId) {
             setIsLectureCompleted(completedLectures.has(lectureId));
+            
+            // Check if quiz was passed
+            let isPassed = false;
+            if (currentProgress.quizScores) {
+              const quizScores = typeof currentProgress.quizScores === 'string' 
+                ? JSON.parse(currentProgress.quizScores) 
+                : currentProgress.quizScores;
+                
+              // Look for a quiz for this lecture
+              const quizId = `quiz-1`;
+              const fullQuizId = Object.keys(quizScores).find(id => 
+                id.includes(lectureId) || id === quizId
+              );
+              
+              if (fullQuizId) {
+                const scoreData = quizScores[fullQuizId];
+                if (typeof scoreData === 'object' && scoreData.passed) {
+                  isPassed = true;
+                } else if (typeof scoreData === 'number') {
+                  isPassed = scoreData >= 70;
+                }
+              }
+            }
+            
+            setQuizPassed(isPassed);
           }
           
           // Update the last accessed timestamp without modifying completed lectures
@@ -195,7 +221,12 @@ const LectureDetailPage: React.FC = () => {
         <h1>
           {lecture.title}
           {isLectureCompleted && (
-            <span className="completion-indicator" title="Completed">✓</span>
+            <span 
+              className={`completion-indicator ${quizPassed ? 'passed' : 'failed'}`} 
+              title={quizPassed ? "Completed and passed" : "Completed but quiz not passed"}
+            >
+              {quizPassed ? "✓" : "✗"}
+            </span>
           )}
         </h1>
         <div className="lecture-meta">
@@ -267,7 +298,13 @@ const LectureDetailPage: React.FC = () => {
           onClick={handleStartQuiz}
           className="amplify-button amplify-button--primary start-quiz-btn"
         >
-          Start Quiz for this Lecture
+          {isLectureCompleted 
+            ? (quizPassed 
+                ? "Take Quiz Again" 
+                : "Retake Quiz (Not Passed)"
+              ) 
+            : "Start Quiz for this Lecture"
+          }
         </button>
         {savingProgress && <small className="saving-indicator">Saving progress...</small>}
         {progressError && <div className="progress-error">{progressError}</div>}

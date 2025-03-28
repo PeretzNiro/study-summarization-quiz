@@ -24,7 +24,7 @@ const LecturesPage: React.FC = () => {
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [, setUserProgress] = useState<UserProgress | null>(null);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const [, setProgressLoading] = useState(false);
   const [completedLectureIds, setCompletedLectureIds] = useState<string[]>([]);
 
@@ -159,6 +159,55 @@ const LecturesPage: React.FC = () => {
     }
   }
   
+  // Check if a lecture is completed and passed based on user progress 
+  const getCompletionStatus = (lectureId: string): { completed: boolean, passed: boolean } => {
+    // First check if the lecture is in completedLectures
+    const completed = completedLectureIds.includes(lectureId);
+    
+    // Check if there's quiz data for this lecture and if it was passed
+    let passed = false;
+    
+    if (userProgress && userProgress.quizScores) {
+      // Handle different data formats for quizScores
+      let quizScores: Record<string, any> = {};
+      
+      if (typeof userProgress.quizScores === 'string') {
+        // If quizScores is stored as a JSON string
+        try {
+          quizScores = JSON.parse(userProgress.quizScores);
+        } catch (e) {
+          console.error('Failed to parse quizScores:', e);
+        }
+      } else if (typeof userProgress.quizScores === 'object') {
+        // If quizScores is already an object
+        quizScores = userProgress.quizScores;
+      }
+      
+      // Check if we have a quiz ID that matches this lecture
+      const quizIdPattern = new RegExp(`${lectureId}`);
+      const fullQuizId = Object.keys(quizScores).find(id => 
+        quizIdPattern.test(id) || id === 'quiz-1'
+      );
+      
+      if (fullQuizId) {
+        const scoreData = quizScores[fullQuizId];
+        
+        if (typeof scoreData === 'object' && scoreData.passed !== undefined) {
+          // If scoreData is an object with a passed property
+          passed = Boolean(scoreData.passed);
+        } else if (typeof scoreData === 'object' && scoreData.score !== undefined) {
+          // If scoreData is an object with a score property
+          passed = scoreData.score >= 70;
+        } else if (typeof scoreData === 'number') {
+          // If scoreData is directly the score number
+          passed = scoreData >= 70;
+        }
+      }
+    }
+    
+    return { completed, passed };
+  };
+
   // Check if a lecture has been completed by the user
   const isLectureCompleted = (lectureId: string): boolean => {
     return completedLectureIds.includes(lectureId);
@@ -208,16 +257,21 @@ const LecturesPage: React.FC = () => {
           <div className='lecture-page box_wrapper_no_hover'>
             <div className="lecture-list">
               {lectures.map(lecture => {
-                const isCompleted = isLectureCompleted(lecture.lectureId);
+                const { completed, passed } = getCompletionStatus(lecture.lectureId);
                 
                 return (
                   <div key={lecture.lectureId} className="lecture-card">
                     <div className="lecture-content">
                       <h2>
-                      {lecture.title}
-                      {isCompleted && (
-                      <span className="completion-indicator" title="Completed">✓</span>
-                      )}
+                        {lecture.title}
+                        {completed && (
+                          <span 
+                            className={`completion-indicator ${passed ? 'passed' : 'failed'}`} 
+                            title={passed ? "Completed and passed" : "Completed but failed"}
+                          >
+                            {passed ? "✓" : "✗"}
+                          </span>
+                        )}
                       </h2>
                       
                       <div className="lecture-meta">
@@ -243,7 +297,9 @@ const LecturesPage: React.FC = () => {
                         onClick={() => handleStartQuiz(lecture.lectureId)} 
                         className="amplify-button amplify-button--primary--overlay"
                       >
-                        Start Quiz
+                        {completed ? (
+                          passed ? "Take Quiz Again" : "Retake Quiz (Not Passed)"
+                        ) : "Start Quiz"}
                       </button>
                     </div>
                   </div>
