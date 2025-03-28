@@ -96,10 +96,40 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   disabled={isSubmitted} // Prevent changing answers after submission
                 />
                 <span>
-                  {/* Render answer choices as markdown too */}
+                  {/* Render answer choices as markdown */}
                   <ReactMarkdown 
                     rehypePlugins={[rehypeRaw, rehypeKatex]}
                     remarkPlugins={[remarkGfm, remarkMath]}
+                    components={{
+                      // Syntax highlighting for code blocks in answers
+                      code({node, inline, className, children, ...props}: {
+                        node?: any;
+                        inline?: boolean;
+                        className?: string;
+                        children?: React.ReactNode;
+                        [key: string]: any;
+                      }) {
+                        const match = /language-(\w+)/.exec(className || '');
+                        return !inline && match ? (
+                          <SyntaxHighlighter
+                            style={vscDarkPlus}
+                            language={match[1]}
+                            PreTag="div"
+                            customStyle={{
+                              borderRadius: '6px',
+                              margin: '0.5rem 0'
+                            }}
+                            {...props}
+                          >
+                            {String(children).replace(/\n$/, '')}
+                          </SyntaxHighlighter>
+                        ) : (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      }
+                    }}
                   >
                     {choice}
                   </ReactMarkdown>
