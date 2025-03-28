@@ -12,21 +12,6 @@ export const shouldRenderAsMarkdown = (content: string): boolean => {
   
   // Patterns for different markdown elements
   const patterns = [
-    // Code blocks with language specification
-    /```[a-z]+[\s\S]*?```/,
-    
-    // General code blocks
-    /```[\s\S]*?```/,
-    
-    // Inline code
-    /`[^`]+`/,
-    
-    // Math blocks
-    /\$\$[\s\S]*?\$\$/,
-    
-    // Inline math
-    /\$[^\$\n]+\$/,
-    
     // Links
     /\[.+?\]\(.+?\)/,
     
@@ -47,7 +32,8 @@ export const shouldRenderAsMarkdown = (content: string): boolean => {
     /^---+$/m,
     
     // Blockquotes
-    /^>\s.+/m
+    /^>\s.+/m,
+    
   ];
   
   // Test if any pattern matches the content
