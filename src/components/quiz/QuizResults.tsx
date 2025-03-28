@@ -18,44 +18,63 @@ interface QuizResultsProps {
   courseId: string;                 // Course identifier for navigation
 }
 
-// Reusable markdown renderer with code highlighting
-const MarkdownWithCode = ({ children }: { children: string }) => (
-  <ReactMarkdown 
-    rehypePlugins={[rehypeRaw, rehypeKatex]}
-    remarkPlugins={[remarkGfm, remarkMath]}
-    components={{
-      // Syntax highlighting for code blocks
-      code({node, inline, className, children, ...props}: {
-        node?: any;
-        inline?: boolean;
-        className?: string;
-        children?: React.ReactNode;
-        [key: string]: any;
-      }) {
-        const match = /language-(\w+)/.exec(className || '');
-        return !inline && match ? (
-          <SyntaxHighlighter
-            style={vscDarkPlus}
-            language={match[1]}
-            PreTag="div"
-            customStyle={{
-              borderRadius: '6px',
-              margin: '0.5rem 0'
-            }}
-            {...props}
-          >
-            {String(children).replace(/\n$/, '')}
-          </SyntaxHighlighter>
-        ) : (
-          <code className={className} {...props}>
-            {children}
-          </code>
-        );
-      }
-    }}
-  >
-    {children}
-  </ReactMarkdown>
+/**
+ * Determines if content should be treated as markdown
+ * @param content - The content to check
+ * @returns true if the content contains markdown elements, false otherwise
+ */
+const shouldRenderAsMarkdown = (content: string) => {
+  // Check if the content has special markers or looks like it contains markdown
+  return /```|\$\$.+\$\$|\$[^$]+\$|!\[.*\]\(.*\)|\[.*\]\(.*\)|<table>|<img>|#{1,6}\s|```[a-z]*\n/.test(content);
+};
+
+/**
+  * Displays markdown or plain text based on content type
+  * @param children - The content to render
+  * @returns JSX element with either markdown or plain text
+  */
+const MarkdownOrText = ({ children }: { children: string }) => (
+  shouldRenderAsMarkdown(children) ? (
+    <ReactMarkdown 
+      rehypePlugins={[rehypeRaw, rehypeKatex]}
+      remarkPlugins={[remarkGfm, remarkMath]}
+      components={{
+        // Syntax highlighting for code blocks
+        code({node, inline, className, children, ...props}: {
+          node?: any;
+          inline?: boolean;
+          className?: string;
+          children?: React.ReactNode;
+          [key: string]: any;
+        }) {
+          const match = /language-(\w+)/.exec(className || '');
+          return !inline && match ? (
+            <SyntaxHighlighter
+              style={vscDarkPlus}
+              language={match[1]}
+              PreTag="div"
+              customStyle={{
+                borderRadius: '6px',
+                margin: '0.5rem 0'
+              }}
+              {...props}
+            >
+              {String(children).replace(/\n$/, '')}
+            </SyntaxHighlighter>
+          ) : (
+            <code className={className} {...props}>
+              {children}
+            </code>
+          );
+        }
+      }}
+    >
+      {children}
+    </ReactMarkdown>
+  ) : (
+    // Just output as plain text if it doesn't look like markdown
+    <span>{children}</span>
+  )
 );
 
 /**
@@ -131,9 +150,9 @@ const QuizResults: React.FC<QuizResultsProps> = ({
                 <strong>Your Answer:</strong>{' '}
                 {userAnswerIndex !== null && userAnswerIndex !== undefined ? (
                   <div className="answer-text">
-                    <MarkdownWithCode>
+                    <MarkdownOrText>
                       {question.answerChoices[userAnswerIndex]}
-                    </MarkdownWithCode>
+                    </MarkdownOrText>
                   </div>
                 ) : (
                   'Not answered'
@@ -144,9 +163,9 @@ const QuizResults: React.FC<QuizResultsProps> = ({
               <p>
                 <strong>Correct Answer:</strong>{' '}
                 <div className="answer-text">
-                  <MarkdownWithCode>
+                  <MarkdownOrText>
                     {question.answerChoices[question.correctAnswerIndex]}
-                  </MarkdownWithCode>
+                  </MarkdownOrText>
                 </div>
               </p>
               
