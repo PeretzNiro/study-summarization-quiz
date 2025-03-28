@@ -3,10 +3,13 @@ import { useAuthenticator, Authenticator } from '@aws-amplify/ui-react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import AdminPage from "./pages/AdminPage";
 import Navigation from "./components/nav/Navigation";
+import Footer from "./components/footer/Footer";
 import CoursesPage from "./pages/CoursesPage";
 import LecturesPage from "./pages/LecturesPage";
 import LectureDetailPage from "./pages/LectureDetailPage";
 import QuizPage from "./pages/QuizPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AdminRoute from './components/auth/AdminRoute';
 import './components/quiz/Quiz.css';
@@ -101,19 +104,6 @@ function AppContent() {
           <h2>🧠 Take an Assessment</h2>
           <p>Test your knowledge with quizzes</p>
         </div>
-        
-        <div className="box_wrapper">
-          <h2>🎯 Achieve a Task</h2>
-          <p>Break down goals into manageable steps</p>
-        </div>
-        
-        <div className="box_wrapper">
-          <h2>🗓️ Schedule Your Time</h2>
-          <p>Organize courses, tasks, and personal commitments</p>
-        </div>
-      </div>
-      <div className="footer">
-        <p>🥳 App successfully hosted.</p>
       </div>
     </>
   );
@@ -122,7 +112,7 @@ function AppContent() {
     <main className="app-container">
       <NavigationWrapper />
       
-      <div className="page-content">
+      <div className="page-content display-flex">
         <Routes>
           <Route path="/" element={renderHomePage()} />
           <Route path="/courses" element={<CoursesPage />} />
@@ -135,9 +125,16 @@ function AppContent() {
             <Route path="/admin" element={<AdminPage />} />
           </Route>
           
+          {/* Policy Pages */}
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
+      
+      {/* Add Footer Component */}
+      <Footer />
     </main>
   );
 }

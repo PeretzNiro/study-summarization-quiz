@@ -59,7 +59,15 @@ a {
 }
 
 #root {
-  padding: 0 1rem;
+  padding: 0;
+}
+
+h1 {
+  font-size: 1.9em;
+}
+
+h2 {
+  font-size: 1.4em;
 }
 
 .navigation {
@@ -112,7 +120,9 @@ a {
   flex-direction: column;
   align-self: anchor-center;
   max-width: 460px;
-  margin: auto;
+  width: 100%;
+  flex-grow: 1;
+  justify-content: center;
 }
 
 .radius {
@@ -131,6 +141,11 @@ a {
 
 .flex-wrap {
   flex-wrap: wrap !important;
+}
+
+.display-flex {
+  display: flex;
+  flex-direction: column;
 }
 
 .footer {

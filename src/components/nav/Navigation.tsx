@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Flex, Button} from '@aws-amplify/ui-react';
+import { Link } from 'react-router-dom';
 import './Navigation.css';
 
 interface NavigationProps {
@@ -60,7 +61,9 @@ const Navigation: React.FC<NavigationProps> = ({
         className="navigation-header"
       >
         <div className="logo">
-          <span>🎓 LearnApp</span>
+          <Link to="/" onClick={() => handleTabClick('main')}>
+            <span>🎓 LearnApp</span>
+          </Link>
         </div>
 
         {/* Hamburger menu button (mobile only) */}

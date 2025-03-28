@@ -38,3 +38,10 @@
   border-radius: 0 0 8px 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
+
+.admin-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 0;
+  width: 100%;
+}

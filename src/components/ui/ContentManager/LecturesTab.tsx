@@ -324,7 +324,7 @@ const LecturesTab: React.FC<LecturesTabProps> = ({
       )}
       
       {/* Filter and search controls */}
-      <Flex justifyContent="space-between" marginBottom="1rem">
+      <Flex className='flex-wrap' justifyContent="space-between" marginBottom="1rem">
         <SelectField
           label="Filter by Course"
           labelHidden

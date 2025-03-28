@@ -1,8 +1,8 @@
-/* Course Listing Styles */
 .courses-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem 1rem;
+  width: 100%;
 }
 
 .courses-page h1 {
@@ -99,7 +99,7 @@
 .lectures-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 0;
 }
 
 .course-header {
@@ -180,7 +180,7 @@
 .lecture-detail-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 0;
   width: 100%;
 }
 
@@ -248,7 +248,8 @@
 .quiz-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 0;
+  width: 100%;
 }
 
 .quiz-header {

@@ -472,8 +472,8 @@ const QuizzesTab: React.FC<QuizzesTabProps> = ({
       ) : (
         <>
           {/* Quiz list view with filters */}
-          <Flex justifyContent="space-between" marginBottom="1rem">
-            <Flex direction="row" gap="1rem">
+          <Flex className='flex-wrap' justifyContent="space-between" marginBottom="1rem">
+            <Flex className='flex-wrap' direction="row" gap="1rem">
               <SelectField
                 label="Course"
                 labelHidden

@@ -506,8 +506,8 @@ const QuizQuestionsTab: React.FC<QuizQuestionsTabProps> = ({
       )}
       
       {/* Filter controls */}
-      <Flex justifyContent="space-between" marginBottom="1rem">
-        <Flex direction="row" gap="1rem">
+      <Flex className='flex-wrap' justifyContent="space-between" marginBottom="1rem">
+        <Flex className='flex-wrap' direction="row" gap="1rem">
           {/* Course filter */}
           <SelectField
             label="Filter by Course"
