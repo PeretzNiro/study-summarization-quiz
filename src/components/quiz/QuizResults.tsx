@@ -1,6 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { QuizQuestion, UserAnswer } from './types';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 interface QuizResultsProps {
   questions: QuizQuestion[];        // List of all quiz questions
@@ -68,26 +73,46 @@ const QuizResults: React.FC<QuizResultsProps> = ({
           
           return (
             <div key={question.id} className={`result-item ${isCorrect ? 'correct' : 'wrong'}`}>
-              <h4>Question {index + 1}: {question.question}</h4>
+              {/* Render question as markdown */}
+              <h4>Question {index + 1}:</h4>
+              <div className="question-text">
+                <ReactMarkdown 
+                  rehypePlugins={[rehypeRaw, rehypeKatex]}
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                >
+                  {question.question}
+                </ReactMarkdown>
+              </div>
               
               {/* Show user's selected answer */}
               <p>
                 <strong>Your Answer:</strong>{' '}
-                {userAnswerIndex !== null && userAnswerIndex !== undefined
-                  ? question.answerChoices[userAnswerIndex]
-                  : 'Not answered'}
+                {userAnswerIndex !== null && userAnswerIndex !== undefined ? (
+                  <ReactMarkdown>
+                    {question.answerChoices[userAnswerIndex]}
+                  </ReactMarkdown>
+                ) : (
+                  'Not answered'
+                )}
               </p>
               
               {/* Show the correct answer */}
               <p>
                 <strong>Correct Answer:</strong>{' '}
-                {question.answerChoices[question.correctAnswerIndex]}
+                <ReactMarkdown>
+                  {question.answerChoices[question.correctAnswerIndex]}
+                </ReactMarkdown>
               </p>
               
               {/* Show explanation for the correct answer */}
               <div className="explanation">
                 <strong>Explanation:</strong>
-                <p>{question.explanation}</p>
+                <ReactMarkdown 
+                  rehypePlugins={[rehypeRaw, rehypeKatex]}
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                >
+                  {question.explanation}
+                </ReactMarkdown>
               </div>
             </div>
           );
