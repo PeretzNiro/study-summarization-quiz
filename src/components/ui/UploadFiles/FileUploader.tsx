@@ -343,6 +343,7 @@ const FileUpload: React.FC = () => {
               style={{ display: 'none' }}
               onChange={handleFileSelect}
               accept=".pdf,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+              aria-label="Upload lecture document"
             />
             
             {/* Custom styled upload button */}

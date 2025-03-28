@@ -105,6 +105,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   checked={selectedAnswerIndex === index}
                   onChange={() => onAnswerSelect(index)}
                   disabled={isSubmitted} // Prevent changing answers after submission
+                  aria-label={`Answer option ${index + 1}: ${choice.substring(0, 20)}${choice.length > 20 ? '...' : ''}`}
                 />
                 <span>
                   {shouldRenderAsMarkdown(choice) ? (

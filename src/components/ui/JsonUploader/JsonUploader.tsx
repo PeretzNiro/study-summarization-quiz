@@ -238,6 +238,7 @@ const JsonUploader: React.FC = () => {
           ref={fileInputRef}
           style={{ display: 'none' }}
           onChange={handleFileChange}
+          aria-label="Upload JSON file"
         />
         {jsonFile && (
           <Text>Selected: {jsonFile.name}</Text>
