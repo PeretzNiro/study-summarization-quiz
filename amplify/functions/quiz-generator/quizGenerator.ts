@@ -143,6 +143,8 @@ For each question:
 4. Provide a brief explanation of why the answer is correct.
 5. Assign a difficulty level (Easy, Medium, Hard).
 6. Assign a topic tag that categorizes what concept this question is testing.
+7. Use markdown formatting for better readability.
+8. For any code snippets, use proper markdown code blocks with language specifications.
 
 Format each question as follows:
 {
