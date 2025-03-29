@@ -43,7 +43,7 @@
 
 .question-text code {
   font-family: monospace;
-  padding: 0.2rem 0.4rem;
+  padding: 0.2rem 0;
   border-radius: 3px;
   font-size: 0.9em;
 }
