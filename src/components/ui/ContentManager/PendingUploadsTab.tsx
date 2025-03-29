@@ -52,6 +52,22 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
     difficulty: 'Medium'
   });
   
+  // State for lecture number
+  const [lectureNumber, setLectureNumber] = useState<string>('1');
+
+  // Function to generate lecture ID
+  const generateLectureId = (courseId: string, lectureNumber: string): string => {
+    const cleanCourseId = courseId.replace(/-Lecture-\d+$/, '');
+    return `${cleanCourseId}-Lecture-${lectureNumber}`;
+  };
+
+  // Add this function to validate the lectureId format
+  const isValidLectureId = (lectureId: string, courseId: string): boolean => {
+    // Ensure lectureId starts with courseId and follows the pattern courseId-Lecture-#
+    const pattern = new RegExp(`^${courseId}-Lecture-\\d+$`);
+    return pattern.test(lectureId);
+  };
+  
   // Fetch pending uploads when component mounts
   useEffect(() => {
     fetchPendingUploads();
@@ -93,12 +109,25 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
    */
   const handleReviewClick = (lecture: Lecture) => {
     setSelectedLecture(lecture);
+    
+    // Extract lecture number from existing lectureId or default to "1"
+    let extractedNumber = "1";
+    if (lecture.lectureId) {
+      const match = lecture.lectureId.match(/-Lecture-(\d+)$/);
+      if (match && match[1]) {
+        extractedNumber = match[1];
+      }
+    }
+    
+    setLectureNumber(extractedNumber);
+    
     setEditedValues({
       courseId: lecture.courseId || '',
-      lectureId: lecture.lectureId || '',
+      lectureId: lecture.lectureId || generateLectureId(lecture.courseId || '', extractedNumber),
       title: lecture.title || '',
       difficulty: lecture.difficulty || 'Medium'
     });
+    
     setIsModalOpen(true);
   };
   
@@ -108,11 +137,19 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // If changing courseId through the text field, update courseId
     if (name === 'courseId') {
+      // When courseId changes, update both courseId and generate a new lectureId
       setEditedValues({
         ...editedValues,
-        courseId: value
+        courseId: value,
+        lectureId: generateLectureId(value, lectureNumber)
+      });
+    } else if (name === 'lectureNumber') {
+      // When lecture number changes, update the number and regenerate lectureId
+      setLectureNumber(value);
+      setEditedValues({
+        ...editedValues,
+        lectureId: generateLectureId(editedValues.courseId, value)
       });
     } else {
       // For all other fields, update normally
@@ -129,6 +166,15 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
    */
   const handleApprove = async () => {
     if (!selectedLecture) return;
+    
+    // Validate that lectureId follows the correct format
+    if (!isValidLectureId(editedValues.lectureId, editedValues.courseId)) {
+      setActionMessage({
+        type: 'error',
+        text: 'Lecture ID must follow the format: CourseID-Lecture-#'
+      });
+      return;
+    }
     
     try {
       setLoading(true);
@@ -326,6 +372,14 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
                   Please review and correct the course/lecture information below.
                 </Text>
                 
+                <Alert className='radius-s' variation="info" marginBottom="1rem">
+                  <Text fontWeight="bold">Lecture ID Convention:</Text>
+                  <Text>
+                    Lecture IDs follow the format: <code>[CourseID]-Lecture-[Number]</code><br />
+                    Example: <code>COMP-1811-Lecture-3</code>
+                  </Text>
+                </Alert>
+                
                 {/* Course selection with dropdown and manual entry */}
                 <View>
                   <Text as="label" fontWeight="bold">Course ID</Text>
@@ -343,7 +397,8 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
                           // Otherwise update with the selected course
                           setEditedValues({
                             ...editedValues,
-                            courseId: value
+                            courseId: value,
+                            lectureId: generateLectureId(value, lectureNumber)
                           });
                         }
                       }}
@@ -371,13 +426,33 @@ const PendingUploadsTab: React.FC<PendingUploadsTabProps> = ({
                 </View>
                 
                 {/* Lecture metadata fields */}
-                <TextField
-                  label="Lecture ID"
-                  name="lectureId"
-                  value={editedValues.lectureId}
-                  onChange={handleInputChange}
-                  descriptiveText="Enter a consistent lecture ID (e.g., Lecture1, Week2)"
-                />
+                <View marginBottom="1rem">
+                  <Text as="label" fontWeight="bold">Lecture Information</Text>
+                  <Flex direction="column" gap="0.5rem">
+                    <SelectField
+                      label={null}
+                      name="lectureNumber"
+                      value={lectureNumber}
+                      onChange={handleInputChange}
+                      descriptiveText="Select the lecture number"
+                    >
+                      {[...Array(30)].map((_, i) => (
+                        <option key={i+1} value={String(i+1)}>
+                          Lecture {i+1}
+                        </option>
+                      ))}
+                    </SelectField>
+                    
+                    <TextField
+                      label="Generated Lecture ID"
+                      name="lectureId"
+                      value={editedValues.lectureId}
+                      isReadOnly
+                      variation="quiet"
+                      descriptiveText="This ID is automatically generated from Course ID and Lecture Number"
+                    />
+                  </Flex>
+                </View>
                 
                 <TextField
                   label="Title"
