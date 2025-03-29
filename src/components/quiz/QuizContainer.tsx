@@ -274,13 +274,15 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQu
         }
         
         // Add or update this quiz score
+        const quizData = {
+          score: score,
+          passed: score >= 70,
+          lectureId: lectureId,
+          timeCompleted: currentDate
+        };
         quizScores = {
           ...quizScores,
-          [quizId]: {
-            score,
-            completedAt: currentDate,
-            passed: score >= 70
-          }
+          [quizId]: quizData
         };
   
         // Mark lecture as completed if not already
@@ -299,12 +301,14 @@ const QuizContainer: React.FC<QuizContainerProps> = ({ courseId, lectureId, onQu
         
       } else {
         // Create new progress record for first-time completions
+        const quizData = {
+          score: score,
+          passed: score >= 70,
+          lectureId: lectureId,
+          timeCompleted: currentDate
+        };
         const quizScores = {
-          [quizId]: {
-            score,
-            completedAt: currentDate,
-            passed: score >= 70
-          }
+          [quizId]: quizData
         };
   
         await authClient.models.UserProgress.create({

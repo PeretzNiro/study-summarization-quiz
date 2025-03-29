@@ -140,18 +140,29 @@ const LectureDetailPage: React.FC = () => {
                 ? JSON.parse(currentProgress.quizScores) 
                 : currentProgress.quizScores;
                 
-              // Look for a quiz for this lecture
-              const quizId = `quiz-1`;
-              const fullQuizId = Object.keys(quizScores).find(id => 
-                id.includes(lectureId) || id === quizId
-              );
+              // Look for quiz entries that match the CURRENT lecture ID
+              const matchingQuizzes = Object.entries(quizScores).filter(([_, quizData]) => {
+                // Check if the quiz data contains information about which lecture it belongs to
+                if (typeof quizData === 'object' && quizData !== null) {
+                  // First check if quiz has a lectureId property that matches current lecture
+                  return 'lectureId' in quizData && quizData.lectureId === lectureId;
+                }
+                return false;
+              });
               
-              if (fullQuizId) {
-                const scoreData = quizScores[fullQuizId];
-                if (typeof scoreData === 'object' && scoreData.passed) {
+              // If we found matching quizzes for this lecture
+              if (matchingQuizzes.length > 0) {
+                // Use the most recent quiz result (or any result that exists)
+                const [_, scoreData] = matchingQuizzes[0];
+                
+                if (typeof scoreData === 'object' && scoreData && 'passed' in scoreData) {
                   isPassed = true;
-                } else if (typeof scoreData === 'number') {
-                  isPassed = scoreData >= 70;
+                } else if (typeof scoreData === 'object' && scoreData && 'score' in scoreData) {
+                  isPassed = typeof scoreData === 'object' && 
+                             scoreData !== null && 
+                             'score' in scoreData && 
+                             typeof scoreData.score === 'number' && 
+                             scoreData.score >= 70;
                 }
               }
             }

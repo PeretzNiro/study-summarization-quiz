@@ -183,23 +183,25 @@ const LecturesPage: React.FC = () => {
         quizScores = userProgress.quizScores;
       }
       
-      // Check if we have a quiz ID that matches this lecture
-      const quizIdPattern = new RegExp(`${lectureId}`);
-      const fullQuizId = Object.keys(quizScores).find(id => 
-        quizIdPattern.test(id) || id === 'quiz-1'
-      );
+      // Find all quizzes that belong to this lecture
+      const matchingQuizzes = Object.entries(quizScores).filter(([_, quizData]) => {
+        // Check if the quiz data is an object with a lectureId property
+        if (typeof quizData === 'object' && quizData !== null) {
+          return quizData.lectureId === lectureId;
+        }
+        return false;
+      });
       
-      if (fullQuizId) {
-        const scoreData = quizScores[fullQuizId];
+      // If we found matching quizzes for this lecture, check the results
+      if (matchingQuizzes.length > 0) {
+        // Use the most recent quiz result (or any valid result)
+        const [_, scoreData] = matchingQuizzes[0];
         
         if (typeof scoreData === 'object' && scoreData.passed !== undefined) {
-          // If scoreData is an object with a passed property
           passed = Boolean(scoreData.passed);
         } else if (typeof scoreData === 'object' && scoreData.score !== undefined) {
-          // If scoreData is an object with a score property
           passed = scoreData.score >= 70;
         } else if (typeof scoreData === 'number') {
-          // If scoreData is directly the score number
           passed = scoreData >= 70;
         }
       }
