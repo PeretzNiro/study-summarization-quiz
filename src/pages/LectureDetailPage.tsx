@@ -156,13 +156,13 @@ const LectureDetailPage: React.FC = () => {
                 const [_, scoreData] = matchingQuizzes[0];
                 
                 if (typeof scoreData === 'object' && scoreData && 'passed' in scoreData) {
-                  isPassed = true;
+                  isPassed = Boolean(scoreData.passed);
                 } else if (typeof scoreData === 'object' && scoreData && 'score' in scoreData) {
                   isPassed = typeof scoreData === 'object' && 
-                             scoreData !== null && 
-                             'score' in scoreData && 
-                             typeof scoreData.score === 'number' && 
-                             scoreData.score >= 70;
+                            scoreData !== null && 
+                            'score' in scoreData && 
+                            typeof scoreData.score === 'number' && 
+                            scoreData.score >= 70;
                 }
               }
             }

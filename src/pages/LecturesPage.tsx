@@ -172,35 +172,42 @@ const LecturesPage: React.FC = () => {
       let quizScores: Record<string, any> = {};
       
       if (typeof userProgress.quizScores === 'string') {
-        // If quizScores is stored as a JSON string
         try {
           quizScores = JSON.parse(userProgress.quizScores);
         } catch (e) {
           console.error('Failed to parse quizScores:', e);
         }
       } else if (typeof userProgress.quizScores === 'object') {
-        // If quizScores is already an object
         quizScores = userProgress.quizScores;
       }
       
-      // Find all quizzes that belong to this lecture
+      // Find quizzes that belong to this specific lecture
       const matchingQuizzes = Object.entries(quizScores).filter(([_, quizData]) => {
-        // Check if the quiz data is an object with a lectureId property
         if (typeof quizData === 'object' && quizData !== null) {
-          return quizData.lectureId === lectureId;
+          return 'lectureId' in quizData && quizData.lectureId === lectureId;
         }
         return false;
       });
       
-      // If we found matching quizzes for this lecture, check the results
+      // See if the user passed any of the quizzes for this lecture
       if (matchingQuizzes.length > 0) {
-        // Use the most recent quiz result (or any valid result)
+        // Sort by timeCompleted if available to get the most recent quiz attempt
+        matchingQuizzes.sort((a, b) => {
+          const timeA = a[1].timeCompleted ? new Date(a[1].timeCompleted).getTime() : 0;
+          const timeB = b[1].timeCompleted ? new Date(b[1].timeCompleted).getTime() : 0;
+          return timeB - timeA; // Most recent first
+        });
+        
+        // Get the most recent quiz result
         const [_, scoreData] = matchingQuizzes[0];
         
-        if (typeof scoreData === 'object' && scoreData.passed !== undefined) {
-          passed = Boolean(scoreData.passed);
-        } else if (typeof scoreData === 'object' && scoreData.score !== undefined) {
-          passed = scoreData.score >= 70;
+        // Check if the quiz was passed
+        if (typeof scoreData === 'object') {
+          if ('passed' in scoreData) {
+            passed = Boolean(scoreData.passed);
+          } else if ('score' in scoreData) {
+            passed = scoreData.score >= 70;
+          }
         } else if (typeof scoreData === 'number') {
           passed = scoreData >= 70;
         }
