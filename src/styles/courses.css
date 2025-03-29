@@ -326,6 +326,24 @@
   margin-top: 0.5rem;
 }
 
+.click-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.click-text {
+  margin-right: 0.5rem;
+  opacity: 0.8;
+}
+
+.course-card:hover .click-indicator {
+  color: var(--amplify-colors-brand-secondary);
+}
+
 @media screen and (max-width : 400px) {
   .lecture-list {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

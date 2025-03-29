@@ -136,7 +136,7 @@ export const handler: Handler = async (event: any) => {
             id: uuidv4(),
             courseId: courseId,
             lectureId: lectureId,
-            quizId: `${courseId}-${lectureId}-quiz`, // Default identifier for the first quiz
+            quizId: `${lectureId}-quiz-1`,
             title: title ? `${title} Quiz` : 'Lecture Quiz',
             description: 'Main quiz for this lecture',
             questionIds: questionIds, 
