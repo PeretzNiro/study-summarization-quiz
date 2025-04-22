@@ -37,7 +37,7 @@ const PrivacyPolicyPage: React.FC = () => {
         <section>
           <h2>What Personal Data We Collect</h2>
           <ul>
-            <li><strong>Account Information</strong>: Email address, name, and authentication details</li>
+            <li><strong>Account Information</strong>: Email address, and authentication details</li>
             <li><strong>User Progress Data</strong>: Completed lectures, quiz scores, and learning activity timestamps</li>
             <li><strong>Usage Information</strong>: How you interact with the platform, including features used and time spent</li>
             <li><strong>Content You Create</strong>: Any materials you upload for processing</li>

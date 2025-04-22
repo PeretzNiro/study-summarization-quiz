@@ -141,7 +141,6 @@ The application should now be running on `http://localhost:5173/`
 ## Common Issues and Fixes
 
 1. **PDF Processing Errors**:
-    - Check the file size (keep under 10MB for best results)
     - Ensure the PDF isn't encrypted or password-protected
 2. **API Limit Errors**:
     - If you hit Gemini API rate limits, wait a few minutes before trying again
