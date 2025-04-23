@@ -154,7 +154,7 @@ The application should now be running on `http://localhost:5173/`
         node fix-pdf-parse.cjs
         
         ```
-        
+    
 
 ## Cleaning Up
 
